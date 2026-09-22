@@ -1,0 +1,12 @@
+# Build output
+DoomLauncher.exe
+wadstat.exe
+*.syso
+
+# The icon is extracted from your own DOOM2.WAD at build time.
+# It is id Software's artwork, so it is not redistributed here.
+doom.ico
+
+# Local user data written next to the exe at runtime
+launcher.json
+history.jsonl
