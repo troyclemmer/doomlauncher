@@ -54,7 +54,8 @@ type launcher struct {
 	mw        *walk.MainWindow
 	tabs      *walk.TabWidget
 	iwadBox   *walk.ComboBox
-	campBox   *walk.ComboBox
+	campBoxes [4]*walk.ComboBox
+	buckets   [4][]Entry
 	skillBox  *walk.ComboBox
 	extraEdit *walk.LineEdit
 	brutalBox *walk.CheckBox
@@ -68,6 +69,9 @@ type launcher struct {
 	readmeBox  *walk.TextEdit
 	readmeName *walk.Label
 	readmeFile string
+
+	statuses    *statusModel
+	statusTable *walk.TableView
 
 	cheats      *cheatModel
 	cheatFilter *walk.LineEdit
@@ -90,6 +94,7 @@ func main() {
 	l.hist = loadHistory(historyPath(l.cfgPath))
 	l.cheats = newCheatModel()
 	l.wads = newWadCache()
+	l.statuses = &statusModel{l: l}
 	l.rescan()
 
 	if err := l.build(); err != nil {
@@ -108,6 +113,7 @@ func fatal(msg string) {
 
 func (l *launcher) rescan() {
 	l.scan = scanDir(l.gameDir, l.cfg.Presets)
+	l.bucketize()
 
 	// Honour an explicitly configured mod file while it is still present,
 	// otherwise fall back to whatever Brutal Doom build is in the folder.
@@ -153,19 +159,43 @@ func (l *launcher) build() error {
 									},
 									HSpacer{Size: 10},
 
-									Label{Text: "Campaign / WAD:"},
+									Label{Text: "In progress:"},
 									ComboBox{
-										AssignTo:              &l.campBox,
-										Model:                 l.entryNames(),
-										OnCurrentIndexChanged: l.onCampaignChanged,
+										AssignTo:              &l.campBoxes[0],
+										Model:                 l.bucketNames(0),
+										OnCurrentIndexChanged: l.onCampaignChanged(0),
 									},
 									Composite{
-										Layout: HBox{MarginsZero: true, SpacingZero: false},
+										Layout: HBox{MarginsZero: true},
 										Children: []Widget{
 											PushButton{Text: "New...", MaxSize: Size{Width: 70}, OnClicked: l.onAddPreset},
 											PushButton{Text: "Edit...", MaxSize: Size{Width: 70}, OnClicked: l.onEditPreset},
 										},
 									},
+
+									Label{Text: "Not started:"},
+									ComboBox{
+										AssignTo:              &l.campBoxes[1],
+										Model:                 l.bucketNames(1),
+										OnCurrentIndexChanged: l.onCampaignChanged(1),
+									},
+									HSpacer{Size: 10},
+
+									Label{Text: "Completed:"},
+									ComboBox{
+										AssignTo:              &l.campBoxes[2],
+										Model:                 l.bucketNames(2),
+										OnCurrentIndexChanged: l.onCampaignChanged(2),
+									},
+									HSpacer{Size: 10},
+
+									Label{Text: "Ignored:"},
+									ComboBox{
+										AssignTo:              &l.campBoxes[3],
+										Model:                 l.bucketNames(3),
+										OnCurrentIndexChanged: l.onCampaignChanged(3),
+									},
+									HSpacer{Size: 10},
 
 									Label{Text: "Skill:"},
 									ComboBox{
@@ -212,6 +242,37 @@ func (l *launcher) build() error {
 									PushButton{Text: "Launch", MinSize: Size{Width: 120, Height: 32}, OnClicked: l.onLaunch},
 								},
 							},
+						},
+					},
+					{
+						Title:  "Progress",
+						Layout: VBox{},
+						Children: []Widget{
+							TableView{
+								AssignTo:         &l.statusTable,
+								Model:            l.statuses,
+								AlternatingRowBG: true,
+								MultiSelection:   true,
+								ColumnsOrderable: false,
+								Columns: []TableViewColumn{
+									{Title: "Campaign", Width: 210},
+									{Title: "Status", Width: 110},
+									{Title: "Files", Width: 50},
+									{Title: "Loads", Width: 320},
+								},
+							},
+							Composite{
+								Layout: HBox{MarginsZero: true},
+								Children: []Widget{
+									Label{Text: "Set selected to:"},
+									PushButton{Text: "In progress", OnClicked: func() { l.setSelectedStatus(StatusProgress) }},
+									PushButton{Text: "Not started", OnClicked: func() { l.setSelectedStatus(StatusTodo) }},
+									PushButton{Text: "Completed", OnClicked: func() { l.setSelectedStatus(StatusDone) }},
+									PushButton{Text: "Ignored", OnClicked: func() { l.setSelectedStatus(StatusIgnore) }},
+									HSpacer{},
+								},
+							},
+							Label{Text: "Ctrl-click or shift-click to select several. Status decides which dropdown a campaign appears in on the Launch tab."},
 						},
 					},
 					{
@@ -331,12 +392,18 @@ func (l *launcher) build() error {
 	return nil
 }
 
-func (l *launcher) entryNames() []string {
-	names := make([]string, len(l.scan.Entries))
-	for i, e := range l.scan.Entries {
-		names[i] = e.Name
+// currentEntry finds the one dropdown that has a campaign selected. All four
+// blank means no campaign, i.e. play the IWAD on its own.
+func (l *launcher) currentEntry() Entry {
+	for i := range l.campBoxes {
+		if l.campBoxes[i] == nil {
+			continue
+		}
+		if idx := l.campBoxes[i].CurrentIndex(); idx > 0 && idx-1 < len(l.buckets[i]) {
+			return l.buckets[i][idx-1]
+		}
 	}
-	return names
+	return Entry{}
 }
 
 // restoreSelection puts every control back where it was left last session.
@@ -344,7 +411,7 @@ func (l *launcher) restoreSelection() {
 	l.loading = true
 
 	l.iwadBox.SetCurrentIndex(indexOfFold(l.scan.IWADs, l.cfg.LastIWAD, 0))
-	l.campBox.SetCurrentIndex(indexOfFold(l.entryNames(), l.cfg.LastCampaign, 0))
+	l.selectCampaign(l.cfg.LastCampaign)
 
 	l.brutalBox.SetChecked(l.modFile != "" && *l.cfg.BrutalOn)
 
@@ -373,14 +440,6 @@ func indexOfFold(list []string, want string, fallback int) int {
 	return -1
 }
 
-func (l *launcher) currentEntry() Entry {
-	i := l.campBox.CurrentIndex()
-	if i < 0 || i >= len(l.scan.Entries) {
-		return Entry{}
-	}
-	return l.scan.Entries[i]
-}
-
 func (l *launcher) currentIWAD() string {
 	i := l.iwadBox.CurrentIndex()
 	if i < 0 || i >= len(l.scan.IWADs) {
@@ -391,8 +450,42 @@ func (l *launcher) currentIWAD() string {
 
 // onCampaignChanged restores the IWAD this campaign was last played with, so
 // switching to a Doom 1 megawad does not silently keep DOOM2.WAD selected.
-func (l *launcher) onCampaignChanged() {
+// selectCampaign picks a campaign in whichever bucket holds it, blanking the
+// other three.
+func (l *launcher) selectCampaign(name string) {
+	for i := range l.campBoxes {
+		l.campBoxes[i].SetCurrentIndex(0)
+	}
+	if name == "" {
+		return
+	}
+	for i := range l.buckets {
+		for j, e := range l.buckets[i] {
+			if strings.EqualFold(e.Name, name) {
+				l.campBoxes[i].SetCurrentIndex(j + 1)
+				return
+			}
+		}
+	}
+}
+
+// onCampaignChanged keeps the four dropdowns mutually exclusive: choosing a
+// campaign in one clears the others, so only ever one thing is loaded.
+func (l *launcher) onCampaignChanged(which int) func() {
+	return func() { l.campaignChanged(which) }
+}
+
+func (l *launcher) campaignChanged(which int) {
 	if !l.loading {
+		if l.campBoxes[which] != nil && l.campBoxes[which].CurrentIndex() > 0 {
+			l.loading = true
+			for j := range l.campBoxes {
+				if j != which && l.campBoxes[j] != nil {
+					l.campBoxes[j].SetCurrentIndex(0)
+				}
+			}
+			l.loading = false
+		}
 		entry := l.currentEntry()
 		if iwad, ok := l.cfg.CampaignIWAD[strings.ToLower(entry.Name)]; ok {
 			if i := indexOfFold(l.scan.IWADs, iwad, -1); i >= 0 {
@@ -472,9 +565,12 @@ func (l *launcher) onRefresh() {
 	l.rescan()
 	l.loading = true
 	l.iwadBox.SetModel(l.scan.IWADs)
-	l.campBox.SetModel(l.entryNames())
+	for i := range l.campBoxes {
+		l.campBoxes[i].SetModel(l.bucketNames(i))
+	}
 	l.loading = false
 	l.restoreSelection()
+	l.statuses.reload()
 }
 
 // onAddPreset builds a new multi-file entry - the Extermination Day case, where
@@ -534,9 +630,12 @@ func (l *launcher) applyPreset(origName string, res presetResult) {
 
 	l.rescan()
 	l.loading = true
-	l.campBox.SetModel(l.entryNames())
+	for i := range l.campBoxes {
+		l.campBoxes[i].SetModel(l.bucketNames(i))
+	}
 	l.loading = false
 	l.restoreSelection()
+	l.statuses.reload()
 }
 
 func (l *launcher) onCheatFilter() {
@@ -580,9 +679,7 @@ func (l *launcher) onHistoryUse() {
 	if i := indexOfFold(l.scan.IWADs, e.IWAD, -1); i >= 0 {
 		l.iwadBox.SetCurrentIndex(i)
 	}
-	if i := indexOfFold(l.entryNames(), e.Campaign, -1); i >= 0 {
-		l.campBox.SetCurrentIndex(i)
-	}
+	l.selectCampaign(e.Campaign)
 	l.brutalBox.SetChecked(e.Brutal && l.modFile != "")
 	names := l.skills()
 	l.skillBox.SetModel(names)
@@ -627,6 +724,12 @@ func (l *launcher) onLaunch() {
 	if err := cmd.Start(); err != nil {
 		walk.MsgBox(l.mw, "Doom Launcher", "Failed to start:\n\n"+err.Error(), walk.MsgBoxIconError)
 		return
+	}
+
+	// Playing something marks it as started, unless you have already filed it
+	// as completed or ignored.
+	if l.promoteOnLaunch(l.currentEntry().Name) {
+		l.cfg.save(l.cfgPath)
 	}
 
 	l.hist.add(HistoryEntry{

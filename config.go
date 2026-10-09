@@ -25,6 +25,7 @@ type Config struct {
 	ExtraArgs    string            `json:"extra_args"`
 	BrutalOn     *bool             `json:"brutal_on"`
 	CampaignIWAD map[string]string `json:"campaign_iwad"`
+	WadStatus    map[string]string `json:"wad_status"`
 }
 
 func boolPtr(b bool) *bool { return &b }
@@ -41,6 +42,7 @@ func defaultConfig() *Config {
 			},
 		},
 		CampaignIWAD: map[string]string{},
+		WadStatus:    map[string]string{},
 	}
 }
 
@@ -79,6 +81,9 @@ func loadConfig(path string) *Config {
 	}
 	if cfg.CampaignIWAD == nil {
 		cfg.CampaignIWAD = map[string]string{}
+	}
+	if cfg.WadStatus == nil {
+		cfg.WadStatus = map[string]string{}
 	}
 	return cfg
 }

@@ -35,6 +35,17 @@ plus title/author/date pulled from the accompanying `.txt` if it can find one.
 Scanning reads only the WAD directory and `THINGS` lumps, so a 280 MB megawad costs
 a few milliseconds.
 
+**Progress tracking.** Every campaign carries a status — *in progress*, *not
+started*, *completed* or *ignored* — and the Launch tab has one dropdown per
+status, in that order, so what you are playing now is at the top and finished or
+shelved wads sink to the bottom. The four are mutually exclusive: picking a
+campaign in one blanks the others, and blank in all four means "IWAD only".
+
+Anything the launcher has not seen defaults to *not started*. Launching a
+campaign promotes it to *in progress* — but only from *not started*, so marking
+something completed sticks even if you replay it. The **Progress tab** lists
+everything in a table; select one or more rows and reassign them.
+
 **History tab** logs every launch with its full command line. Double-click a row to
 restore those settings.
 
@@ -126,6 +137,7 @@ face was better.
 
 ```
 main.go               window, tabs, event wiring
+status.go             per-campaign play status and the four Launch dropdowns
 config.go             launcher.json load/save
 scan.go               folder scanning, IWAD/mod/campaign classification
 args.go               command-line construction
@@ -166,6 +178,11 @@ go test ./...
 
 Tests read real WADs rather than fixtures. They look for a Doom folder and skip
 cleanly if there isn't one — set `DOOM_DIR` to point at yours.
+
+Tests that *write* use `t.TempDir()` and never a real Doom folder. An early
+version of the config round-trip test wrote into the live directory and deleted
+the user's `launcher.json` on the way out; `TestConfigRoundTrip` now asserts that
+its path cannot escape the temp dir.
 
 ## Why walk
 
