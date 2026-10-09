@@ -8,8 +8,6 @@ mods. Pick a campaign, pick a base game, hit Launch. It remembers what you chose
 
 No installer, no dependencies, no runtime. One `.exe` you drop in your Doom folder.
 
-![tabs: Launch, History, Readme, Cheatsheet](#)
-
 ## What it does
 
 **Auto-detects your folder.** IWADs (DOOM2.WAD, PLUTONIA.WAD, TNT.WAD…) go in one
