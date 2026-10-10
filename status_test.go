@@ -203,3 +203,34 @@ func TestBlankSelectionStillPlaysTheBaseGame(t *testing.T) {
 		t.Error("the two routes to a base game should produce the same command")
 	}
 }
+
+func TestSupportsDoomMods(t *testing.T) {
+	for _, c := range []struct {
+		iwad string
+		want bool
+	}{
+		{"DOOM2.WAD", true}, {"doom.wad", true}, {"PLUTONIA.WAD", true},
+		{"TNT.WAD", true}, {"freedoom2.wad", true},
+		{"HERETIC.WAD", false}, {"HEXEN.WAD", false}, {"STRIFE1.WAD", false},
+		{"DOOM64.WAD", false}, {"CHEX3.WAD", false}, {"", false},
+	} {
+		if got := supportsDoomMods(c.iwad); got != c.want {
+			t.Errorf("supportsDoomMods(%q) = %v, want %v", c.iwad, got, c.want)
+		}
+	}
+}
+
+// The mod must not be added to the command line for a base game it cannot
+// work with, even if Brutal were somehow still ticked.
+func TestNoModArgsForIncompatibleBaseGame(t *testing.T) {
+	spec := launchSpec{IWAD: "HERETIC.WAD", Mod: "brutal22test6.pk3", Brutal: false}
+	if got := commandLine("uzdoom.exe", buildArgs(spec)); got != "uzdoom.exe -iwad HERETIC.WAD" {
+		t.Errorf("got %q", got)
+	}
+	// and it is still added for one that can
+	spec = launchSpec{IWAD: "DOOM2.WAD", Mod: "brutal22test6.pk3", Brutal: true}
+	want := "uzdoom.exe -iwad DOOM2.WAD -file brutal22test6.pk3"
+	if got := commandLine("uzdoom.exe", buildArgs(spec)); got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}

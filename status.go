@@ -233,6 +233,33 @@ func (l *launcher) nameEntries() {
 	}
 }
 
+// syncBrutal enables or disables the mod checkbox for the selected base game.
+// While it is disabled the stored preference must not be overwritten, or
+// visiting Heretic once would quietly turn Brutal Doom off for Doom too.
+func (l *launcher) syncBrutal() {
+	if l.brutalBox == nil {
+		return
+	}
+	iwad := l.currentIWAD()
+	ok := l.modFile != "" && supportsDoomMods(iwad)
+
+	l.brutalBox.SetEnabled(ok) // before SetChecked, so the handler sees the state
+	switch {
+	case l.modFile == "":
+		l.brutalBox.SetText("Brutal Doom  (no brutal*.pk3 found in this folder)")
+	case !ok:
+		l.brutalBox.SetText("Brutal Doom  (not compatible with " + iwad + ")")
+	default:
+		l.brutalBox.SetText("Brutal Doom  (" + l.modFile + ")")
+	}
+	if !ok {
+		l.brutalBox.SetChecked(false)
+	} else {
+		l.brutalBox.SetChecked(l.cfg.BrutalOn != nil && *l.cfg.BrutalOn)
+	}
+	l.onBrutalChanged() // the skill list depends on whether the mod is loaded
+}
+
 // updateStatusBar refreshes the counts along the bottom of the window. These
 // are the numbers you would compare between two machines to see whether the
 // collections and progress actually match.

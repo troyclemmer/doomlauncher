@@ -56,6 +56,21 @@ var iwadTitles = map[string]string{
 	"freedm.wad": "FreeDM",
 }
 
+// doomFamily lists the base games built on Doom's actor set, which is what
+// Brutal Doom and other Doom gameplay mods replace. Heretic, Hexen, Strife and
+// Doom 64 have entirely different actors, so loading such a mod there does
+// nothing useful at best and breaks the game at worst.
+var doomFamily = map[string]bool{
+	"doom.wad": true, "doom1.wad": true, "doom2.wad": true,
+	"plutonia.wad": true, "tnt.wad": true, "nerve.wad": true,
+	"freedoom1.wad": true, "freedoom2.wad": true, "freedm.wad": true,
+}
+
+// supportsDoomMods reports whether a Doom gameplay mod makes sense on a base game.
+func supportsDoomMods(iwad string) bool {
+	return doomFamily[strings.ToLower(iwad)]
+}
+
 // iwadTitle gives a base game a readable name, falling back to its filename.
 func iwadTitle(file string) string {
 	if t, ok := iwadTitles[strings.ToLower(file)]; ok {

@@ -149,9 +149,9 @@ func (l *launcher) build() error {
 		Size:     Size{Width: 780, Height: 540},
 		Layout:   VBox{},
 		StatusBarItems: []StatusBarItem{
+			{AssignTo: &l.sbEngine, Width: 140},
 			{AssignTo: &l.sbCounts, Width: 260},
 			{AssignTo: &l.sbProgress, Width: 330},
-			{AssignTo: &l.sbEngine, Width: 140},
 			{AssignTo: &l.sbSize, Width: 80},
 		},
 		Children: []Widget{
@@ -435,7 +435,7 @@ func (l *launcher) restoreSelection() {
 	l.iwadBox.SetCurrentIndex(indexOfFold(l.scan.IWADs, l.cfg.LastIWAD, 0))
 	l.selectCampaign(l.cfg.LastCampaign)
 
-	l.brutalBox.SetChecked(l.modFile != "" && *l.cfg.BrutalOn)
+	l.syncBrutal()
 
 	names := l.skills()
 	l.skillBox.SetModel(names)
@@ -534,6 +534,9 @@ func (l *launcher) onBrutalChanged() {
 	if l.skillBox == nil {
 		return
 	}
+	if l.brutalBox != nil && l.brutalBox.Enabled() {
+		l.cfg.BrutalOn = boolPtr(l.brutalBox.Checked())
+	}
 	names := l.skills()
 	cur := l.skillBox.CurrentIndex()
 	if cur >= len(names) {
@@ -561,6 +564,7 @@ func (l *launcher) onIWADChanged() {
 		if entry := l.currentEntry(); entry.Name != "" {
 			l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = l.currentIWAD()
 		}
+		l.syncBrutal()
 	}
 	l.updatePreview()
 }
@@ -588,7 +592,9 @@ func (l *launcher) persist() {
 	l.cfg.LastCampaign = l.currentEntry().Name
 	l.cfg.LastSkill = l.skillBox.CurrentIndex()
 	l.cfg.ExtraArgs = l.extraEdit.Text()
-	l.cfg.BrutalOn = boolPtr(l.brutalBox.Checked())
+	if l.brutalBox.Enabled() {
+		l.cfg.BrutalOn = boolPtr(l.brutalBox.Checked())
+	}
 	if l.modFile != "" {
 		l.cfg.ModFile = l.modFile
 	}

@@ -28,6 +28,12 @@ matching the usual convention. The skill dropdown switches between 5 and 8 entri
 depending on whether it's loaded, because Brutal Doom replaces the stock skill
 definitions with eight of its own.
 
+The checkbox disables itself for a base game the mod cannot work with —
+Heretic, Hexen, Strife, Doom 64 and Chex Quest have entirely different actor
+sets — and says so in its label. Your preference is remembered rather than
+overwritten while it is disabled, so switching to Heretic and back leaves
+Brutal Doom ticked as you had it.
+
 **Live command-line preview**, so you can see exactly what will run before it runs.
 
 **WAD info panel** — map count, map range, file size, monster totals per difficulty,
