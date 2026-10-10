@@ -70,28 +70,90 @@ func FindReadme(wadPath string) string {
 			continue
 		}
 
-		score := 0
-		switch {
-		case got == want:
-			score = 100
-		case strings.HasPrefix(got, want):
-			score = 80
-		case strings.HasPrefix(want, got) && len(got) >= 4:
-			score = 70
-		case len(short) >= 4 && strings.HasPrefix(got, short):
-			score = 50
-		}
+		score := readmeScore(want, short, got)
 		if score == 0 {
 			continue
 		}
-		// Among equal matches prefer the shorter name: "Eviternity.txt" beats
-		// "Eviternity_Changelog.txt".
-		score = score*1000 - len(got)
 		if score > bestScore {
 			best, bestScore = filepath.Join(dir, e.Name()), score
 		}
 	}
 	return best
+}
+
+// readmeScore rates a candidate text file against a wad name. Higher is
+// better, zero means no match. Among equally good matches the shorter name
+// wins, so "Eviternity.txt" beats "Eviternity_Changelog.txt".
+func readmeScore(want, short, got string) int {
+	score := 0
+	switch {
+	case got == want:
+		score = 100
+	case strings.HasPrefix(got, want):
+		score = 80
+	case strings.HasPrefix(want, got) && len(got) >= 4:
+		score = 70
+	case len(short) >= 4 && strings.HasPrefix(got, short):
+		score = 50
+	}
+	if score == 0 {
+		return 0
+	}
+	return score*1000 - len(got)
+}
+
+// TitleFinder resolves readme titles for many wads in one directory. It reads
+// the directory once and caches parsed text files, so naming a whole dropdown
+// costs one listing rather than one per wad.
+type TitleFinder struct {
+	dir   string
+	txts  []string
+	cache map[string]*Readme
+}
+
+func NewTitleFinder(dir string) *TitleFinder {
+	tf := &TitleFinder{dir: dir, cache: map[string]*Readme{}}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return tf
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.EqualFold(filepath.Ext(e.Name()), ".txt") {
+			tf.txts = append(tf.txts, e.Name())
+		}
+	}
+	return tf
+}
+
+// Title returns the readme title for a wad, or "" when there is no matching
+// text file or it has no Title field.
+func (tf *TitleFinder) Title(wadName string) string {
+	base := filepath.Base(wadName)
+	want := normalize(strings.TrimSuffix(base, filepath.Ext(base)))
+	if want == "" {
+		return ""
+	}
+	short := stem(want)
+
+	best, bestScore := "", 0
+	for _, name := range tf.txts {
+		got := normalize(strings.TrimSuffix(name, filepath.Ext(name)))
+		if got == "" {
+			continue
+		}
+		if sc := readmeScore(want, short, got); sc > bestScore {
+			best, bestScore = name, sc
+		}
+	}
+	if best == "" {
+		return ""
+	}
+	r, ok := tf.cache[best]
+	if !ok {
+		r, _ = LoadReadme(filepath.Join(tf.dir, best))
+		tf.cache[best] = r
+	}
+	return r.Get("title")
 }
 
 // LoadReadme reads and parses a text file.

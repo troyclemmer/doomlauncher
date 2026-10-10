@@ -113,6 +113,7 @@ func fatal(msg string) {
 
 func (l *launcher) rescan() {
 	l.scan = scanDir(l.gameDir, l.cfg.Presets)
+	l.nameEntries()
 	l.bucketize()
 
 	// Honour an explicitly configured mod file while it is still present,

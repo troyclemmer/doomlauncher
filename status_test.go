@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func newTestLauncher(entries []Entry, status map[string]string) *launcher {
 	cfg := defaultConfig()
@@ -116,5 +119,29 @@ func TestPromoteOnLaunchIgnoresEmptyName(t *testing.T) {
 	}
 	if len(l.cfg.WadStatus) != 0 {
 		t.Errorf("WadStatus should stay empty, got %v", l.cfg.WadStatus)
+	}
+}
+
+// Dropdown labels must be unique, or you get two identical rows and no way to
+// tell them apart. STRG.wad and STRG_M28.wad both match STRG.txt, so this is a
+// real case rather than a hypothetical one.
+func TestDisplayNamesAreUnique(t *testing.T) {
+	dir := doomDir(t)
+	cfg := defaultConfig()
+	l := &launcher{gameDir: dir, cfg: cfg}
+	l.scan = scanDir(dir, cfg.Presets)
+	l.nameEntries()
+
+	seen := map[string]string{}
+	for _, e := range l.scan.Entries {
+		if len(e.Files) == 0 {
+			continue
+		}
+		key := strings.ToLower(e.Display)
+		if prev, dup := seen[key]; dup {
+			t.Errorf("duplicate dropdown label %q used by both %q and %q", e.Display, prev, e.Name)
+		}
+		seen[key] = e.Name
+		t.Logf("%-34s <- %s", e.Display, e.Name)
 	}
 }

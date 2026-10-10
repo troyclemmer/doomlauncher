@@ -31,8 +31,9 @@ var loadableExts = map[string]bool{
 
 // Entry is one selectable item in the campaign dropdown.
 type Entry struct {
-	Name  string
-	Files []string
+	Name    string // identity: used as the key for status, history and config
+	Display string // what the dropdown shows: readme title, or Name
+	Files   []string
 }
 
 type scanResult struct {

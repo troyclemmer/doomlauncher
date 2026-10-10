@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strings"
 
+	"doomlauncher/internal/wadinfo"
+
 	"github.com/lxn/walk"
 )
 
@@ -66,7 +68,7 @@ func (l *launcher) bucketNames(i int) []string {
 	out := make([]string, 0, len(l.buckets[i])+1)
 	out = append(out, "")
 	for _, e := range l.buckets[i] {
-		out = append(out, e.Name)
+		out = append(out, e.Display)
 	}
 	return out
 }
@@ -114,11 +116,11 @@ func (m *statusModel) Value(row, col int) interface{} {
 	e := m.items[row]
 	switch col {
 	case 0:
-		return e.Name
+		return e.Display
 	case 1:
-		return statusLabel[m.l.statusOf(e.Name)]
+		return e.Name
 	case 2:
-		return len(e.Files)
+		return statusLabel[m.l.statusOf(e.Name)]
 	case 3:
 		return strings.Join(e.Files, ", ")
 	}
@@ -177,4 +179,53 @@ func (l *launcher) promoteOnLaunch(name string) bool {
 	}
 	l.cfg.WadStatus[statusKey(name)] = StatusProgress
 	return true
+}
+
+// nameEntries works out what each dropdown row should say. A preset keeps the
+// name you gave it, marked with a trailing asterisk; an auto-detected wad uses
+// the title from its readme when there is one, falling back to the filename.
+//
+// Two wads can share a readme - STRG.wad and STRG_M28.wad both match STRG.txt -
+// so a title already taken by another entry is qualified with the filename
+// rather than producing two identical rows.
+func (l *launcher) nameEntries() {
+	tf := wadinfo.NewTitleFinder(l.gameDir)
+	used := map[string]string{}
+
+	for i := range l.scan.Entries {
+		e := &l.scan.Entries[i]
+		if len(e.Files) == 0 {
+			e.Display = e.Name
+			continue
+		}
+		if l.isPreset(e.Name) {
+			e.Display = e.Name + " *"
+			continue
+		}
+		e.Display = e.Name
+		title := strings.TrimSpace(tf.Title(e.Files[0]))
+		if title == "" {
+			continue // no readme, or it has no Title field
+		}
+		if owner, taken := used[strings.ToLower(title)]; taken {
+			_ = owner
+			e.Display = title + " (" + e.Name + ")"
+			continue
+		}
+		used[strings.ToLower(title)] = e.Name
+		e.Display = title
+	}
+
+	// A title claimed later by a second wad must also qualify the first one,
+	// or the earlier row stays ambiguous.
+	counts := map[string]int{}
+	for _, e := range l.scan.Entries {
+		counts[strings.ToLower(e.Display)]++
+	}
+	for i := range l.scan.Entries {
+		e := &l.scan.Entries[i]
+		if counts[strings.ToLower(e.Display)] > 1 && e.Display != e.Name {
+			e.Display = e.Display + " (" + e.Name + ")"
+		}
+	}
 }

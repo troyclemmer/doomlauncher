@@ -35,6 +35,12 @@ plus title/author/date pulled from the accompanying `.txt` if it can find one.
 Scanning reads only the WAD directory and `THINGS` lumps, so a 280 MB megawad costs
 a few milliseconds.
 
+**Friendly names.** Dropdowns show the title from each wad's readme rather than
+its filename — *Struggle - Antaresian Legacy*, not `STRG`. Presets keep the name
+you gave them, marked with a trailing `*`. Where two wads share a readme (STRG
+and STRG_M28 both match STRG.txt) the duplicate is qualified with its filename,
+so no two rows ever read the same.
+
 **Progress tracking.** Every campaign carries a status — *in progress*, *not
 started*, *completed* or *ignored* — and the Launch tab has one dropdown per
 status, in that order, so what you are playing now is at the top and finished or
