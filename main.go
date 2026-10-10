@@ -253,16 +253,17 @@ func (l *launcher) build() error {
 						Layout: VBox{},
 						Children: []Widget{
 							TableView{
-								AssignTo:         &l.statusTable,
-								Model:            l.statuses,
-								AlternatingRowBG: true,
-								MultiSelection:   true,
-								ColumnsOrderable: false,
+								AssignTo:            &l.statusTable,
+								Model:               l.statuses,
+								AlternatingRowBG:    true,
+								MultiSelection:      true,
+								ColumnsOrderable:    false,
+								LastColumnStretched: true,
 								Columns: []TableViewColumn{
-									{Title: "Campaign", Width: 210},
-									{Title: "Status", Width: 110},
-									{Title: "Files", Width: 50},
-									{Title: "Loads", Width: 320},
+									{Title: "Title", Width: 230},
+									{Title: "File", Width: 150},
+									{Title: "Status", Width: 100},
+									{Title: "Loads", Width: 260},
 								},
 							},
 							Composite{
@@ -288,6 +289,7 @@ func (l *launcher) build() error {
 								Model:                 l.hist,
 								AlternatingRowBG:      true,
 								ColumnsOrderable:      false,
+								LastColumnStretched:   true,
 								OnCurrentIndexChanged: l.onHistorySelect,
 								OnItemActivated:       l.onHistoryUse,
 								Columns: []TableViewColumn{
@@ -357,6 +359,7 @@ func (l *launcher) build() error {
 								Model:                 l.cheats,
 								AlternatingRowBG:      true,
 								ColumnsOrderable:      false,
+								LastColumnStretched:   true,
 								OnCurrentIndexChanged: l.onCheatSelect,
 								OnItemActivated:       l.onCheatCopy,
 								Columns: []TableViewColumn{
