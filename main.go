@@ -765,6 +765,11 @@ func (l *launcher) onLaunch() {
 		return
 	}
 
+	if msg := l.unplayableReason(); msg != "" {
+		walk.MsgBox(l.mw, "Cannot launch", msg, walk.MsgBoxIconError)
+		return
+	}
+
 	spec := l.spec()
 	args := buildArgs(spec)
 

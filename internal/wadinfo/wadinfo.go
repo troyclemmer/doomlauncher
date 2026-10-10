@@ -68,6 +68,12 @@ type MapInfo struct {
 
 // Info is everything we learned about one file.
 type Info struct {
+	// HasPalette reports whether the file carries a PLAYPAL lump. Every
+	// Doom-engine IWAD needs one; Doom 64's re-release wad has none, and the
+	// engine dies with "GetNumForName: PLAYPAL not found!" rather than
+	// explaining itself.
+	HasPalette bool
+
 	File  string
 	Kind  string // IWAD, PWAD or PK3
 	Lumps int
@@ -118,7 +124,8 @@ func scanArchive(path string, size int64) (*Info, error) {
 	}
 	defer zr.Close()
 
-	info := &Info{File: filepath.Base(path), Kind: "PK3", Bytes: size, Lumps: len(zr.File)}
+	// An archive keeps its palette as a file rather than a lump; assume present.
+	info := &Info{File: filepath.Base(path), Kind: "PK3", Bytes: size, Lumps: len(zr.File), HasPalette: true}
 	for _, f := range zr.File {
 		name := strings.ToLower(f.Name)
 		// Maps may sit under maps/ or as a whole wad embedded anywhere in the
@@ -185,6 +192,12 @@ func parseWAD(r io.ReaderAt, size int64) (*Info, error) {
 	}
 
 	info := &Info{Kind: kind, Lumps: len(dir)}
+	for _, l := range dir {
+		if l.name == "PLAYPAL" {
+			info.HasPalette = true
+			break
+		}
+	}
 	for i, l := range dir {
 		if i+1 >= len(dir) {
 			break

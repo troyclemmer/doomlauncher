@@ -253,6 +253,9 @@ func (l *launcher) renderWadInfo(paths []string, primary string) (string, bool) 
 		}
 		lines = append(lines, monsters)
 	}
+	if info, _, ok := l.wads.get(primary); ok && info != nil && info.Kind == "IWAD" && !info.HasPalette {
+		lines = append(lines, "WARNING: no PLAYPAL lump - this engine cannot run it")
+	}
 	if era := l.eraOf(primary); era != "" {
 		lines = append(lines, "Map names are "+era+" style  -  needs a "+era+" base game")
 	}
@@ -357,4 +360,28 @@ func isDoom1IWAD(iwad string) bool {
 		return true
 	}
 	return false
+}
+
+// unplayableReason checks the selected base game before handing it to the
+// engine. A wad with no PLAYPAL makes the engine abort with a bare
+// "GetNumForName: PLAYPAL not found!", which says nothing useful.
+func (l *launcher) unplayableReason() string {
+	iwad := l.currentIWAD()
+	if iwad == "" {
+		return ""
+	}
+	path := l.abs(iwad)
+	info, _, cached := l.wads.get(path)
+	if !cached {
+		var err error
+		info, err = wadinfo.Scan(path)
+		l.wads.put(path, info, err)
+	}
+	if info == nil || info.HasPalette {
+		return ""
+	}
+	return iwad + " has no PLAYPAL lump, so this engine cannot run it.\n\n" +
+		"Doom 64 stores its data in its own format rather than as Doom lumps. " +
+		"To play it you need a dedicated port such as Doom64EX-Plus, or a " +
+		"GZDoom recreation like Doom 64: Retribution."
 }

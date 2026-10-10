@@ -296,3 +296,27 @@ func TestHereticHexenClassification(t *testing.T) {
 		}
 	}
 }
+
+// DOOM64.WAD has no PLAYPAL, which is why the engine aborts on it. Detecting
+// that is what lets the launcher explain instead of crashing.
+func TestPaletteDetection(t *testing.T) {
+	dir := doomDir(t)
+	for _, c := range []struct {
+		file string
+		want bool
+	}{
+		{"DOOM2.WAD", true},
+		{"heretic.wad", true},
+		{"hexen.wad", true},
+		{"DOOM64.WAD", false},
+	} {
+		info, err := wadinfo.Scan(filepath.Join(dir, c.file))
+		if err != nil {
+			t.Logf("skipping %s: %v", c.file, err)
+			continue
+		}
+		if info.HasPalette != c.want {
+			t.Errorf("%s: HasPalette = %v, want %v", c.file, info.HasPalette, c.want)
+		}
+	}
+}
