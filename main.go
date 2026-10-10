@@ -288,6 +288,7 @@ func (l *launcher) build() error {
 						Children: []Widget{
 							TableView{
 								AssignTo:            &l.statusTable,
+								StretchFactor:       2,
 								Model:               l.statuses,
 								AlternatingRowBG:    true,
 								MultiSelection:      true,
@@ -320,6 +321,7 @@ func (l *launcher) build() error {
 						Children: []Widget{
 							TableView{
 								AssignTo:              &l.histTable,
+								StretchFactor:         2,
 								Model:                 l.hist,
 								AlternatingRowBG:      true,
 								ColumnsOrderable:      false,
@@ -340,7 +342,8 @@ func (l *launcher) build() error {
 								AssignTo: &l.histCmd,
 								ReadOnly: true,
 								VScroll:  true,
-								MinSize:  Size{Height: 60},
+								MinSize:  Size{Height: 52},
+								MaxSize:  Size{Height: 72},
 							},
 							Composite{
 								Layout: HBox{MarginsZero: true},
@@ -390,6 +393,7 @@ func (l *launcher) build() error {
 							},
 							TableView{
 								AssignTo:              &l.cheatTable,
+								StretchFactor:         2,
 								Model:                 l.cheats,
 								AlternatingRowBG:      true,
 								ColumnsOrderable:      false,
@@ -406,7 +410,8 @@ func (l *launcher) build() error {
 								AssignTo: &l.cheatDetail,
 								ReadOnly: true,
 								VScroll:  true,
-								MinSize:  Size{Height: 62},
+								MinSize:  Size{Height: 58},
+								MaxSize:  Size{Height: 88},
 							},
 							Composite{
 								Layout: HBox{MarginsZero: true},
