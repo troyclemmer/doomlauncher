@@ -98,11 +98,13 @@ Win32 controls through syscalls, so `CGO_ENABLED=0` is fine.
 .uild.ps1 -Install   build and copy into the Doom folder
 ```
 
-`build.ps1` derives a version from the commit count and hash and injects it
-with `-ldflags -X main.version=...`, so the title bar reads
-`Doom Launcher v1.0.15 (2861c58)` — enough to tell at a glance which build a
-machine is running, with a trailing `+` when the tree is dirty. A plain
-`go build` leaves it as `dev`:
+`build.ps1` derives a version from the commit count and short hash and injects
+it with `-ldflags -X main.version=...`, so the title bar reads
+`Doom Launcher v1.16 (1a1527c)` — enough to tell at a glance which build a
+machine is running. The first number is set by hand in the script; the second
+is the commit count, so it increments on its own. `+dirty` is appended when the
+tree had uncommitted changes, meaning the hash does not describe the binary.
+A plain `go build` leaves it as `dev`:
 
 ```
 go build -ldflags "-H=windowsgui -s -w" -o DoomLauncher.exe .

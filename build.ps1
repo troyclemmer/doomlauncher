@@ -6,10 +6,15 @@
 param([string]$DoomDir = "C:\Program Files (x86)\BD", [switch]$Install)
 
 $ErrorActionPreference = "Stop"
+# Major is the only hand-set number; the second is the commit count, so it
+# increments on its own. Bump $major by hand for a release you consider a
+# break from what came before.
+$major = 1
 $count = (git rev-list --count HEAD).Trim()
 $sha   = (git rev-parse --short HEAD).Trim()
-$dirty = if ((git status --porcelain).Length -gt 0) { "+" } else { "" }
-$ver   = "v1.0.$count ($sha$dirty)"
+# A dirty tree means the hash does not describe what was actually built.
+$dirty = if ((git status --porcelain).Length -gt 0) { "+dirty" } else { "" }
+$ver   = "v$major.$count ($sha$dirty)"
 
 Write-Host "building $ver"
 go build -ldflags "-H=windowsgui -s -w -X 'main.version=$ver'" -o DoomLauncher.exe .
