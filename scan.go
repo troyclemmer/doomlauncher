@@ -11,10 +11,19 @@ import (
 var knownIWADs = map[string]bool{
 	"doom.wad": true, "doom1.wad": true, "doom2.wad": true,
 	"plutonia.wad": true, "tnt.wad": true, "doom64.wad": true,
-	"heretic.wad": true, "hexen.wad": true, "hexdd.wad": true,
+	"heretic.wad": true, "hexen.wad": true,
 	"strife1.wad": true, "chex.wad": true, "chex3.wad": true,
 	"freedoom1.wad": true, "freedoom2.wad": true, "freedm.wad": true,
-	"nerve.wad": true, "id1.wad": true,
+	"heretic_ex.wad": true, "sve.wad": true, "id1.wad": true,
+}
+
+// addonTitles name well-known add-on PWADs that ship without a readme, so
+// they read properly in the dropdowns instead of as bare filenames.
+var addonTitles = map[string]string{
+	"nerve.wad": "No Rest for the Living", "masterlevels.wad": "Master Levels",
+	"sigil.wad": "SIGIL", "sigil2.wad": "SIGIL II",
+	"hexdd.wad":      "Deathkings of the Dark Citadel",
+	"heretic_fr.wad": "Faith Renewed", "hexen_vog.wad": "Vestiges of Grandeur",
 }
 
 // engineFiles ship with GZDoom/UZDoom and are auto-loaded; they are not campaigns.
@@ -49,8 +58,8 @@ type scanResult struct {
 var iwadTitles = map[string]string{
 	"doom.wad": "The Ultimate Doom", "doom1.wad": "Doom (shareware)",
 	"doom2.wad": "Doom II: Hell on Earth", "plutonia.wad": "The Plutonia Experiment",
-	"tnt.wad": "TNT: Evilution", "doom64.wad": "Doom 64", "nerve.wad": "No Rest for the Living",
-	"heretic.wad": "Heretic", "hexen.wad": "Hexen", "hexdd.wad": "Hexen: Deathkings",
+	"tnt.wad": "TNT: Evilution", "doom64.wad": "Doom 64",
+	"heretic.wad": "Heretic", "hexen.wad": "Hexen",
 	"strife1.wad": "Strife", "chex.wad": "Chex Quest", "chex3.wad": "Chex Quest 3",
 	"freedoom1.wad": "Freedoom: Phase 1", "freedoom2.wad": "Freedoom: Phase 2",
 	"freedm.wad": "FreeDM",
@@ -62,7 +71,7 @@ var iwadTitles = map[string]string{
 // nothing useful at best and breaks the game at worst.
 var doomFamily = map[string]bool{
 	"doom.wad": true, "doom1.wad": true, "doom2.wad": true,
-	"plutonia.wad": true, "tnt.wad": true, "nerve.wad": true,
+	"plutonia.wad": true, "tnt.wad": true,
 	"freedoom1.wad": true, "freedoom2.wad": true, "freedm.wad": true,
 }
 

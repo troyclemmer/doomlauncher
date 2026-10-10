@@ -1,8 +1,11 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"doomlauncher/internal/wadinfo"
 )
 
 func newTestLauncher(entries []Entry, status map[string]string) *launcher {
@@ -232,5 +235,43 @@ func TestNoModArgsForIncompatibleBaseGame(t *testing.T) {
 	want := "uzdoom.exe -iwad DOOM2.WAD -file brutal22test6.pk3"
 	if got := commandLine("uzdoom.exe", buildArgs(spec)); got != want {
 		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+// Era inference is what stops SIGIL silently launching on Doom 2.
+func TestEraInferenceOnRealWads(t *testing.T) {
+	dir := doomDir(t)
+	for _, c := range []struct{ file, want string }{
+		{"sigil.wad", "doom1"},
+		{"sigil2.wad", "doom1"},
+		{"nerve.wad", "doom2"},
+		{"masterlevels.wad", "doom2"},
+		{"sunlust.wad", "doom2"},
+		{"DOOM.WAD", "doom1"},
+		{"DOOM2.WAD", "doom2"},
+	} {
+		info, err := wadinfo.Scan(filepath.Join(dir, c.file))
+		if err != nil {
+			t.Logf("skipping %s: %v", c.file, err)
+			continue
+		}
+		if got := info.Era(); got != c.want {
+			t.Errorf("%s: Era() = %q, want %q", c.file, got, c.want)
+		}
+	}
+}
+
+// nerve, sigil and the Master Levels are add-ons, not base games: listing them
+// as IWADs would offer them in the base-game dropdown, where they cannot work.
+func TestAddOnsAreNotBaseGames(t *testing.T) {
+	for _, f := range []string{"nerve.wad", "hexdd.wad", "sigil.wad", "masterlevels.wad", "heretic_fr.wad"} {
+		if knownIWADs[f] {
+			t.Errorf("%s is an add-on PWAD but is listed as a base game", f)
+		}
+	}
+	for _, f := range []string{"doom2.wad", "heretic.wad", "hexen.wad", "strife1.wad", "sve.wad", "heretic_ex.wad"} {
+		if !knownIWADs[f] {
+			t.Errorf("%s is a base game but is not listed", f)
+		}
 	}
 }

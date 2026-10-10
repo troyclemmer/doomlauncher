@@ -207,6 +207,9 @@ func (l *launcher) nameEntries() {
 		}
 		e.Display = e.Name
 		title := strings.TrimSpace(tf.Title(e.Files[0]))
+		if title == "" && len(e.Files) == 1 {
+			title = addonTitles[strings.ToLower(e.Files[0])]
+		}
 		if title == "" {
 			continue // no readme, or it has no Title field
 		}

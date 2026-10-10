@@ -165,6 +165,7 @@ func (l *launcher) updateWadInfo() {
 			if gen != l.wadGen {
 				return // the selection moved on while we were reading
 			}
+			l.suggestIWAD(primary)
 			text, _ := l.renderWadInfo(paths, primary)
 			l.wadBox.SetText(text)
 			r, _ := l.wads.getReadme(primary)
@@ -252,6 +253,9 @@ func (l *launcher) renderWadInfo(paths []string, primary string) (string, bool) 
 		}
 		lines = append(lines, monsters)
 	}
+	if era := l.eraOf(primary); era != "" {
+		lines = append(lines, "Map names are "+era+" style  -  needs a "+era+" base game")
+	}
 	if r, _ := l.wads.getReadme(primary); r != nil {
 		if sum := r.Summary(); sum != "" {
 			lines = append(lines, sum)
@@ -285,4 +289,72 @@ func (l *launcher) onReadmeOpen() {
 	cmd := exec.Command("cmd", "/c", "start", "", l.readmeFile)
 	cmd.Dir = l.gameDir
 	cmd.Start()
+}
+
+// eraOf describes which generation of base game a campaign's maps imply.
+func (l *launcher) eraOf(primary string) string {
+	info, _, ok := l.wads.get(primary)
+	if !ok || info == nil {
+		return ""
+	}
+	switch info.Era() {
+	case "doom1":
+		return "Doom 1"
+	case "doom2":
+		return "Doom 2"
+	}
+	return ""
+}
+
+// suggestIWAD picks the right base game for a campaign the first time you
+// select it, so SIGIL does not silently launch on Doom 2 months from now
+// because you forgot it is episode 5. Your own choice always wins: once a
+// campaign has a remembered base game, this leaves it alone.
+func (l *launcher) suggestIWAD(primary string) {
+	entry := l.currentEntry()
+	if entry.Name == "" || entry.IWAD != "" {
+		return
+	}
+	if _, remembered := l.cfg.CampaignIWAD[strings.ToLower(entry.Name)]; remembered {
+		return
+	}
+	current := l.currentIWAD()
+	if !supportsDoomMods(current) {
+		return // Heretic and friends also use ExMy names; do not touch them
+	}
+
+	var want []string
+	switch l.eraOf(primary) {
+	case "Doom 1":
+		if isDoom1IWAD(current) {
+			return
+		}
+		want = []string{"DOOM.WAD", "DOOM1.WAD", "FREEDOOM1.WAD"}
+	case "Doom 2":
+		if !isDoom1IWAD(current) {
+			return
+		}
+		want = []string{"DOOM2.WAD", "FREEDOOM2.WAD", "TNT.WAD", "PLUTONIA.WAD"}
+	default:
+		return
+	}
+	for _, w := range want {
+		if i := indexOfFold(l.scan.IWADs, w, -1); i >= 0 {
+			l.loading = true
+			l.iwadBox.SetCurrentIndex(i)
+			l.loading = false
+			l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = l.scan.IWADs[i]
+			l.preview.SetText(commandLine(l.cfg.Engine, buildArgs(l.spec())))
+			return
+		}
+	}
+}
+
+// isDoom1IWAD reports whether a base game uses episode-and-map naming.
+func isDoom1IWAD(iwad string) bool {
+	switch strings.ToLower(iwad) {
+	case "doom.wad", "doom1.wad", "freedoom1.wad":
+		return true
+	}
+	return false
 }

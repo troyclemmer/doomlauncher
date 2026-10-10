@@ -245,6 +245,28 @@ func parseWAD(r io.ReaderAt, size int64) (*Info, error) {
 	return info, nil
 }
 
+// Era reports which generation of base game a wad's maps belong to, inferred
+// from their names: ExMy maps are Doom 1 / Heretic style, MAPxx are Doom 2
+// style. Returns "" when the maps are named something else entirely.
+func (i *Info) Era() string {
+	ep, mp := 0, 0
+	for _, m := range i.Maps {
+		switch {
+		case len(m.Name) == 4 && m.Name[0] == 'E' && m.Name[2] == 'M':
+			ep++
+		case strings.HasPrefix(m.Name, "MAP"):
+			mp++
+		}
+	}
+	switch {
+	case ep > mp:
+		return "doom1"
+	case mp > 0:
+		return "doom2"
+	}
+	return ""
+}
+
 // Totals sums monsters across every classic-format map in the file.
 func (i *Info) Totals() [3]int {
 	var t [3]int
