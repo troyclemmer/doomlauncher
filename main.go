@@ -486,6 +486,9 @@ func indexOfFold(list []string, want string, fallback int) int {
 }
 
 func (l *launcher) currentIWAD() string {
+	if l.iwadBox == nil {
+		return ""
+	}
 	i := l.iwadBox.CurrentIndex()
 	if i < 0 || i >= len(l.scan.IWADs) {
 		return ""
@@ -576,21 +579,55 @@ func (l *launcher) onBrutalChanged() {
 
 func (l *launcher) onIWADChanged() {
 	if !l.loading {
-		// Switching base game out from under a base-game entry would leave the
-		// two dropdowns disagreeing, so drop the campaign selection.
-		if entry := l.currentEntry(); entry.IWAD != "" && !strings.EqualFold(entry.IWAD, l.currentIWAD()) {
-			l.loading = true
-			for i := range l.campBoxes {
-				l.campBoxes[i].SetCurrentIndex(0)
-			}
-			l.loading = false
-		}
+		iwad := l.currentIWAD()
 		if entry := l.currentEntry(); entry.Name != "" {
-			l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = l.currentIWAD()
+			if l.clashesWith(entry, iwad) {
+				// The pairing cannot work, so drop it rather than remember it.
+				l.loading = true
+				for i := range l.campBoxes {
+					l.campBoxes[i].SetCurrentIndex(0)
+				}
+				l.loading = false
+				l.syncStatusBox()
+			} else {
+				l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = iwad
+			}
 		}
 		l.syncBrutal()
 	}
 	l.updatePreview()
+}
+
+// clashesWith reports whether a campaign simply cannot run on a base game, so
+// the selection should be dropped instead of silently remembered as a pairing.
+// Plausible combinations are left alone: Sunlust on TNT instead of Doom 2 is
+// unusual but valid, and not the launcher's business to prevent.
+func (l *launcher) clashesWith(entry Entry, iwad string) bool {
+	if entry.IWAD != "" {
+		// A base-game entry is its own IWAD; any other choice disagrees with it.
+		return !strings.EqualFold(entry.IWAD, iwad)
+	}
+	// A campaign's maps tell us which generation of Doom it was built for.
+	// Anything outside the Doom family cannot run a Doom campaign at all.
+	if iwadFamily(iwad) != "doom" {
+		return true
+	}
+	// Derive the primary file from the entry itself rather than from the
+	// widgets, so this stays a pure decision about the pairing.
+	var primary string
+	for _, f := range entry.Files {
+		if auxKind(f) == "" {
+			primary = l.abs(f)
+			break
+		}
+	}
+	switch l.eraOf(primary) {
+	case "Doom 1":
+		return iwadEra(iwad) == "doom2"
+	case "Doom 2":
+		return iwadEra(iwad) == "doom1"
+	}
+	return false
 }
 
 func (l *launcher) spec() launchSpec {

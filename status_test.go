@@ -320,3 +320,48 @@ func TestPaletteDetection(t *testing.T) {
 		}
 	}
 }
+
+func TestClashesWith(t *testing.T) {
+	l := &launcher{cfg: defaultConfig(), wads: newWadCache()}
+	base := Entry{Name: "The Plutonia Experiment", IWAD: "PLUTONIA.WAD"}
+
+	// a base-game entry only agrees with its own IWAD
+	if l.clashesWith(base, "PLUTONIA.WAD") {
+		t.Error("a base game should not clash with itself")
+	}
+	if !l.clashesWith(base, "DOOM2.WAD") {
+		t.Error("a base-game entry must clash with a different IWAD")
+	}
+
+	// a Doom campaign cannot run on another game
+	pwad := Entry{Name: "sunlust", Files: []string{"sunlust.wad"}}
+	for _, iwad := range []string{"HERETIC.WAD", "HEXEN.WAD", "STRIFE1.WAD", "CHEX3.WAD"} {
+		if !l.clashesWith(pwad, iwad) {
+			t.Errorf("a Doom campaign should clash with %s", iwad)
+		}
+	}
+	// but swapping within the Doom family is allowed
+	for _, iwad := range []string{"DOOM2.WAD", "TNT.WAD", "PLUTONIA.WAD"} {
+		if l.clashesWith(pwad, iwad) {
+			t.Errorf("should not clash with %s when the era is unknown", iwad)
+		}
+	}
+}
+
+func TestIwadFamilyAndEra(t *testing.T) {
+	for _, c := range []struct{ iwad, fam, era string }{
+		{"DOOM.WAD", "doom", "doom1"},
+		{"DOOM2.WAD", "doom", "doom2"},
+		{"TNT.WAD", "doom", "doom2"},
+		{"heretic.wad", "heretic", ""},
+		{"hexen.wad", "hexen", ""},
+		{"sve.wad", "strife", ""},
+	} {
+		if got := iwadFamily(c.iwad); got != c.fam {
+			t.Errorf("iwadFamily(%s) = %q, want %q", c.iwad, got, c.fam)
+		}
+		if got := iwadEra(c.iwad); got != c.era {
+			t.Errorf("iwadEra(%s) = %q, want %q", c.iwad, got, c.era)
+		}
+	}
+}

@@ -82,6 +82,37 @@ var doomFamily = map[string]bool{
 	"freedoom1.wad": true, "freedoom2.wad": true, "freedm.wad": true,
 }
 
+// iwadFamily groups base games by which game they actually are. A campaign
+// built for one family can never run on another.
+func iwadFamily(iwad string) string {
+	switch strings.ToLower(iwad) {
+	case "doom.wad", "doom1.wad", "doom2.wad", "plutonia.wad", "tnt.wad",
+		"freedoom1.wad", "freedoom2.wad", "freedm.wad", "id1.wad":
+		return "doom"
+	case "heretic.wad", "heretic_ex.wad":
+		return "heretic"
+	case "hexen.wad":
+		return "hexen"
+	case "strife1.wad", "sve.wad":
+		return "strife"
+	case "chex.wad", "chex3.wad":
+		return "chex"
+	}
+	return ""
+}
+
+// iwadEra splits the Doom family into episode-based and MAPxx-based games,
+// which take different campaigns even though both are Doom.
+func iwadEra(iwad string) string {
+	switch strings.ToLower(iwad) {
+	case "doom.wad", "doom1.wad", "freedoom1.wad":
+		return "doom1"
+	case "doom2.wad", "plutonia.wad", "tnt.wad", "freedoom2.wad", "freedm.wad":
+		return "doom2"
+	}
+	return ""
+}
+
 // supportsDoomMods reports whether a Doom gameplay mod makes sense on a base game.
 func supportsDoomMods(iwad string) bool {
 	return doomFamily[strings.ToLower(iwad)]
