@@ -52,6 +52,8 @@ started*, *completed* or *ignored* — and the Launch tab has one dropdown per
 status, in that order, so what you are playing now is at the top and finished or
 shelved wads sink to the bottom. The four are mutually exclusive: picking a
 campaign in one blanks the others, and blank in all four means "IWAD only".
+Choosing a base game clears the campaign, so a Doom megawad can never still be
+attached when you switch to Hexen.
 
 Anything the launcher has not seen defaults to *not started*. Launching a
 campaign promotes it to *in progress* — but only from *not started*, so marking

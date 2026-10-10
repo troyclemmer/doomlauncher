@@ -579,19 +579,18 @@ func (l *launcher) onBrutalChanged() {
 
 func (l *launcher) onIWADChanged() {
 	if !l.loading {
-		iwad := l.currentIWAD()
+		// Choosing a base game always clears the campaign. Deciding case by
+		// case whether a pairing was plausible meant you could not predict
+		// what the launcher would do; this way the rule is one sentence, and
+		// re-picking costs a click. It also makes launching Hexen with a Doom
+		// megawad still attached impossible rather than merely unlikely.
 		if entry := l.currentEntry(); entry.Name != "" {
-			if l.clashesWith(entry, iwad) {
-				// The pairing cannot work, so drop it rather than remember it.
-				l.loading = true
-				for i := range l.campBoxes {
-					l.campBoxes[i].SetCurrentIndex(0)
-				}
-				l.loading = false
-				l.syncStatusBox()
-			} else {
-				l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = iwad
+			l.loading = true
+			for i := range l.campBoxes {
+				l.campBoxes[i].SetCurrentIndex(0)
 			}
+			l.loading = false
+			l.syncStatusBox()
 		}
 		l.syncBrutal()
 	}

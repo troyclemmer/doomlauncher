@@ -370,6 +370,13 @@ func (l *launcher) unplayableReason() string {
 	if iwad == "" {
 		return ""
 	}
+	// Selecting a base game clears the campaign, so a clash should be
+	// unreachable from the UI. It can still arrive in a launcher.json copied
+	// from another machine whose wads differ, so check before launching.
+	if entry := l.currentEntry(); entry.Name != "" && l.clashesWith(entry, iwad) {
+		return entry.Name + " cannot run on " + iwad + "." + crlf + crlf +
+			"Pick a base game that matches the campaign, or choose a different campaign."
+	}
 	path := l.abs(iwad)
 	info, _, cached := l.wads.get(path)
 	if !cached {
