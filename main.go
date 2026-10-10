@@ -75,7 +75,8 @@ type launcher struct {
 
 	sbCounts   *walk.StatusBarItem
 	sbProgress *walk.StatusBarItem
-	sbLaunches *walk.StatusBarItem
+	sbEngine   *walk.StatusBarItem
+	engineVer  string
 	sbSize     *walk.StatusBarItem
 
 	cheats      *cheatModel
@@ -99,6 +100,7 @@ func main() {
 	l.hist = loadHistory(historyPath(l.cfgPath))
 	l.cheats = newCheatModel()
 	l.wads = newWadCache()
+	l.engineVer = engineVersion(l.abs(l.cfg.Engine))
 	l.statuses = &statusModel{l: l}
 	l.rescan()
 
@@ -149,7 +151,7 @@ func (l *launcher) build() error {
 		StatusBarItems: []StatusBarItem{
 			{AssignTo: &l.sbCounts, Width: 260},
 			{AssignTo: &l.sbProgress, Width: 330},
-			{AssignTo: &l.sbLaunches, Width: 90},
+			{AssignTo: &l.sbEngine, Width: 140},
 			{AssignTo: &l.sbSize, Width: 80},
 		},
 		Children: []Widget{

@@ -57,7 +57,8 @@ entry with a readable title, so they carry a status like any megawad. Selecting
 one pins the base-game dropdown and loads no `-file`.
 
 **Status bar** along the bottom: campaigns, base games and presets detected;
-completed / in progress / not started / ignored; launches logged; and the total
+completed / in progress / not started / ignored; the engine name and version,
+read from the binary's own resource rather than by running it; and the total
 size of every wad in the folder — the numbers worth comparing between two
 machines.
 

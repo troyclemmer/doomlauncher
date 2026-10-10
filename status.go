@@ -259,6 +259,10 @@ func (l *launcher) updateStatusBar() {
 	l.sbProgress.SetText(fmt.Sprintf("%d completed  ·  %d in progress  ·  %d not started  ·  %d ignored",
 		byStatus[indexOfStatus(StatusDone)], byStatus[indexOfStatus(StatusProgress)],
 		byStatus[indexOfStatus(StatusTodo)], byStatus[indexOfStatus(StatusIgnore)]))
-	l.sbLaunches.SetText(fmt.Sprintf("%d launches", l.hist.RowCount()))
+	engine := l.engineVer
+	if engine == "" {
+		engine = l.cfg.Engine
+	}
+	l.sbEngine.SetText(engine)
 	l.sbSize.SetText(wadinfo.HumanSize(l.scan.TotalBytes))
 }

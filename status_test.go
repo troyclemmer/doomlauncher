@@ -189,3 +189,17 @@ func TestBaseGamesAreTrackableEntries(t *testing.T) {
 		t.Errorf("%d base games exist but %d reached the dropdowns", len(found), inBuckets)
 	}
 }
+
+// The old way of playing a base game - leave every dropdown blank and just
+// pick the IWAD - must keep working alongside the new base-game entries.
+func TestBlankSelectionStillPlaysTheBaseGame(t *testing.T) {
+	args := buildArgs(launchSpec{IWAD: "PLUTONIA.WAD"}) // no campaign selected
+	if got := commandLine("uzdoom.exe", args); got != "uzdoom.exe -iwad PLUTONIA.WAD" {
+		t.Fatalf("blank selection produced %q", got)
+	}
+	// and it is identical to picking the base-game entry
+	viaEntry := buildArgs(launchSpec{IWAD: "PLUTONIA.WAD", Files: nil})
+	if commandLine("uzdoom.exe", viaEntry) != commandLine("uzdoom.exe", args) {
+		t.Error("the two routes to a base game should produce the same command")
+	}
+}
