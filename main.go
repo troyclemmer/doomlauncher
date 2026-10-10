@@ -70,6 +70,7 @@ type launcher struct {
 	readmeName *walk.Label
 	readmeFile string
 
+	statusBox   *walk.ComboBox
 	statuses    *statusModel
 	statusTable *walk.TableView
 
@@ -208,6 +209,14 @@ func (l *launcher) build() error {
 												Children: []Widget{
 													PushButton{Text: "New campaign...", MinSize: Size{Width: 120}, OnClicked: l.onAddPreset},
 													PushButton{Text: "Edit selected...", MinSize: Size{Width: 120}, OnClicked: l.onEditPreset},
+													HSpacer{Size: 16},
+													Label{Text: "Status:"},
+													ComboBox{
+														AssignTo:              &l.statusBox,
+														Model:                 statusLabels(),
+														MinSize:               Size{Width: 120},
+														OnCurrentIndexChanged: l.onStatusBoxChanged,
+													},
 													HSpacer{},
 												},
 											},
@@ -411,6 +420,7 @@ func (l *launcher) build() error {
 	l.restoreSelection()
 	l.statuses.reload()
 	l.updateStatusBar()
+	l.syncStatusBox()
 	return nil
 }
 
@@ -448,6 +458,7 @@ func (l *launcher) restoreSelection() {
 
 	l.loading = false
 	l.updatePreview()
+	l.syncStatusBox()
 }
 
 func indexOfFold(list []string, want string, fallback int) int {
@@ -508,6 +519,7 @@ func (l *launcher) campaignChanged(which int) {
 			}
 			l.loading = false
 		}
+		l.syncStatusBox()
 		entry := l.currentEntry()
 		if entry.IWAD != "" {
 			// A base-game entry *is* its IWAD, so pin the base-game dropdown.
@@ -628,6 +640,14 @@ func (l *launcher) onAddPreset() {
 // entry simply promotes it into a saved preset.
 func (l *launcher) onEditPreset() {
 	entry := l.currentEntry()
+	if entry.IWAD != "" {
+		walk.MsgBox(l.mw, "Edit campaign",
+			entry.Name+" is a base game, not a preset, so it has no files to edit."+
+				crlf+crlf+"To change its status use the Status box beside these buttons, "+
+				"or the Progress tab.",
+			walk.MsgBoxIconInformation)
+		return
+	}
 	if len(entry.Files) == 0 {
 		walk.MsgBox(l.mw, "Edit campaign",
 			"Pick a campaign in one of the four dropdowns first.\n\n"+

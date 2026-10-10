@@ -296,3 +296,52 @@ func (l *launcher) updateStatusBar() {
 	l.sbEngine.SetText(engine)
 	l.sbSize.SetText(wadinfo.HumanSize(l.scan.TotalBytes))
 }
+
+// crlf is what the Windows message box and edit controls want for a line break.
+const crlf = "\r\n"
+
+// statusLabels lists the statuses in dropdown order.
+func statusLabels() []string {
+	out := make([]string, 0, len(statusOrder))
+	for _, s := range statusOrder {
+		out = append(out, statusLabel[s])
+	}
+	return out
+}
+
+// syncStatusBox points the Status control at whatever is currently selected.
+func (l *launcher) syncStatusBox() {
+	if l.statusBox == nil {
+		return
+	}
+	entry := l.currentEntry()
+	if entry.Name == "" {
+		l.statusBox.SetEnabled(false)
+		l.statusBox.SetCurrentIndex(-1)
+		return
+	}
+	l.statusBox.SetEnabled(true)
+	l.statusBox.SetCurrentIndex(indexOfStatus(l.statusOf(entry.Name)))
+}
+
+// onStatusBoxChanged reassigns the selected campaign's status from the Launch
+// tab, so you do not have to go hunting for the Progress tab to do it.
+func (l *launcher) onStatusBoxChanged() {
+	if l.loading || l.statusBox == nil {
+		return
+	}
+	entry := l.currentEntry()
+	i := l.statusBox.CurrentIndex()
+	if entry.Name == "" || i < 0 || i >= len(statusOrder) {
+		return
+	}
+	if statusOrder[i] == l.statusOf(entry.Name) {
+		return
+	}
+	l.cfg.WadStatus[statusKey(entry.Name)] = statusOrder[i]
+	l.cfg.save(l.cfgPath)
+	l.refreshBuckets(entry.Name)
+	l.statuses.reload()
+	l.updateStatusBar()
+	l.syncStatusBox()
+}
