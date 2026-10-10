@@ -31,15 +31,37 @@ var loadableExts = map[string]bool{
 
 // Entry is one selectable item in the campaign dropdown.
 type Entry struct {
-	Name    string // identity: used as the key for status, history and config
-	Display string // what the dropdown shows: readme title, or Name
-	Files   []string
+	Name    string   // identity: used as the key for status, history and config
+	Display string   // what the dropdown shows: readme title, or Name
+	Files   []string // loaded with -file; empty for a base game played alone
+	IWAD    string   // set only for a base-game entry, e.g. "DOOM2.WAD"
 }
 
 type scanResult struct {
-	IWADs   []string
-	Entries []Entry
-	Mods    []string
+	IWADs      []string
+	Entries    []Entry
+	Mods       []string
+	TotalBytes int64 // every wad/pk3 we listed, for the status bar
+}
+
+// iwadTitles names the base games, so they read as campaigns rather than
+// filenames when they appear in the progress dropdowns.
+var iwadTitles = map[string]string{
+	"doom.wad": "The Ultimate Doom", "doom1.wad": "Doom (shareware)",
+	"doom2.wad": "Doom II: Hell on Earth", "plutonia.wad": "The Plutonia Experiment",
+	"tnt.wad": "TNT: Evilution", "doom64.wad": "Doom 64", "nerve.wad": "No Rest for the Living",
+	"heretic.wad": "Heretic", "hexen.wad": "Hexen", "hexdd.wad": "Hexen: Deathkings",
+	"strife1.wad": "Strife", "chex.wad": "Chex Quest", "chex3.wad": "Chex Quest 3",
+	"freedoom1.wad": "Freedoom: Phase 1", "freedoom2.wad": "Freedoom: Phase 2",
+	"freedm.wad": "FreeDM",
+}
+
+// iwadTitle gives a base game a readable name, falling back to its filename.
+func iwadTitle(file string) string {
+	if t, ok := iwadTitles[strings.ToLower(file)]; ok {
+		return t
+	}
+	return strings.TrimSuffix(file, filepath.Ext(file))
 }
 
 // scanDir builds the dropdown contents from what is actually on disk,
@@ -83,10 +105,16 @@ func scanDir(dir string, presets []Preset) scanResult {
 
 		if knownIWADs[lower] {
 			res.IWADs = append(res.IWADs, name)
+			if fi, err := it.Info(); err == nil {
+				res.TotalBytes += fi.Size()
+			}
 			continue
 		}
 		if !loadableExts[ext] || engineFiles[lower] {
 			continue
+		}
+		if fi, err := it.Info(); err == nil {
+			res.TotalBytes += fi.Size()
 		}
 		if strings.Contains(lower, "brutal") {
 			res.Mods = append(res.Mods, name)
@@ -108,6 +136,13 @@ func scanDir(dir string, presets []Preset) scanResult {
 
 	for _, p := range presets {
 		loose = append(loose, Entry{Name: p.Name, Files: p.Files})
+	}
+
+	// Base games are campaigns too - you finish Plutonia the same way you
+	// finish Sunlust - so give each one an entry that can carry a status.
+	// It loads no -file; selecting it just pins the IWAD.
+	for _, w := range res.IWADs {
+		loose = append(loose, Entry{Name: iwadTitle(w), IWAD: w})
 	}
 
 	sort.Slice(loose, func(i, j int) bool {

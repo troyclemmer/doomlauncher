@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -50,7 +51,7 @@ func (l *launcher) bucketize() {
 		l.buckets[i] = nil
 	}
 	for _, e := range l.scan.Entries {
-		if len(e.Files) == 0 {
+		if len(e.Files) == 0 && e.IWAD == "" {
 			continue // the "(none - IWAD only)" placeholder
 		}
 		st := l.statusOf(e.Name)
@@ -145,6 +146,7 @@ func (l *launcher) setSelectedStatus(status string) {
 	keep := l.currentEntry().Name
 	l.refreshBuckets(keep)
 	l.statuses.reload()
+	l.updateStatusBar()
 }
 
 // refreshBuckets rebuilds the four dropdowns, restoring the given selection if
@@ -194,7 +196,8 @@ func (l *launcher) nameEntries() {
 
 	for i := range l.scan.Entries {
 		e := &l.scan.Entries[i]
-		if len(e.Files) == 0 {
+		// Base games already have a readable title and no readme to consult.
+		if len(e.Files) == 0 || e.IWAD != "" {
 			e.Display = e.Name
 			continue
 		}
@@ -228,4 +231,34 @@ func (l *launcher) nameEntries() {
 			e.Display = e.Display + " (" + e.Name + ")"
 		}
 	}
+}
+
+// updateStatusBar refreshes the counts along the bottom of the window. These
+// are the numbers you would compare between two machines to see whether the
+// collections and progress actually match.
+func (l *launcher) updateStatusBar() {
+	if l.sbCounts == nil {
+		return
+	}
+	var campaigns, bases int
+	var byStatus [4]int
+	for _, e := range l.scan.Entries {
+		if len(e.Files) == 0 && e.IWAD == "" {
+			continue
+		}
+		if e.IWAD != "" {
+			bases++
+		} else {
+			campaigns++
+		}
+		byStatus[indexOfStatus(l.statusOf(e.Name))]++
+	}
+
+	l.sbCounts.SetText(fmt.Sprintf("%d campaigns  ·  %d base games  ·  %d presets",
+		campaigns, bases, len(l.cfg.Presets)))
+	l.sbProgress.SetText(fmt.Sprintf("%d completed  ·  %d in progress  ·  %d not started  ·  %d ignored",
+		byStatus[indexOfStatus(StatusDone)], byStatus[indexOfStatus(StatusProgress)],
+		byStatus[indexOfStatus(StatusTodo)], byStatus[indexOfStatus(StatusIgnore)]))
+	l.sbLaunches.SetText(fmt.Sprintf("%d launches", l.hist.RowCount()))
+	l.sbSize.SetText(wadinfo.HumanSize(l.scan.TotalBytes))
 }

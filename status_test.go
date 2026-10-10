@@ -145,3 +145,47 @@ func TestDisplayNamesAreUnique(t *testing.T) {
 		t.Logf("%-34s <- %s", e.Display, e.Name)
 	}
 }
+
+// Base games should be selectable campaigns in their own right, carrying a
+// status like any megawad, and must not add a -file argument.
+func TestBaseGamesAreTrackableEntries(t *testing.T) {
+	dir := doomDir(t)
+	cfg := defaultConfig()
+	l := &launcher{gameDir: dir, cfg: cfg}
+	l.scan = scanDir(dir, cfg.Presets)
+	l.nameEntries()
+	l.bucketize()
+
+	found := map[string]Entry{}
+	for _, e := range l.scan.Entries {
+		if e.IWAD != "" {
+			found[e.Name] = e
+		}
+	}
+	for _, want := range []string{"Doom II: Hell on Earth", "The Plutonia Experiment", "TNT: Evilution"} {
+		e, ok := found[want]
+		if !ok {
+			t.Errorf("missing base-game entry %q", want)
+			continue
+		}
+		if len(e.Files) != 0 {
+			t.Errorf("%s must not load any -file, got %v", want, e.Files)
+		}
+		args := buildArgs(launchSpec{IWAD: e.IWAD, Files: e.Files})
+		if got := commandLine("uzdoom.exe", args); got != "uzdoom.exe -iwad "+e.IWAD {
+			t.Errorf("%s produced %q", want, got)
+		}
+	}
+
+	inBuckets := 0
+	for i := range l.buckets {
+		for _, e := range l.buckets[i] {
+			if e.IWAD != "" {
+				inBuckets++
+			}
+		}
+	}
+	if inBuckets != len(found) {
+		t.Errorf("%d base games exist but %d reached the dropdowns", len(found), inBuckets)
+	}
+}

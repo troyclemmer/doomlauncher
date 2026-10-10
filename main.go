@@ -73,6 +73,11 @@ type launcher struct {
 	statuses    *statusModel
 	statusTable *walk.TableView
 
+	sbCounts   *walk.StatusBarItem
+	sbProgress *walk.StatusBarItem
+	sbLaunches *walk.StatusBarItem
+	sbSize     *walk.StatusBarItem
+
 	cheats      *cheatModel
 	cheatFilter *walk.LineEdit
 	cheatTable  *walk.TableView
@@ -141,6 +146,12 @@ func (l *launcher) build() error {
 		MinSize:  Size{Width: 700, Height: 470},
 		Size:     Size{Width: 780, Height: 540},
 		Layout:   VBox{},
+		StatusBarItems: []StatusBarItem{
+			{AssignTo: &l.sbCounts, Width: 260},
+			{AssignTo: &l.sbProgress, Width: 330},
+			{AssignTo: &l.sbLaunches, Width: 90},
+			{AssignTo: &l.sbSize, Width: 80},
+		},
 		Children: []Widget{
 			TabWidget{
 				AssignTo: &l.tabs,
@@ -397,6 +408,7 @@ func (l *launcher) build() error {
 	}
 	l.restoreSelection()
 	l.statuses.reload()
+	l.updateStatusBar()
 	return nil
 }
 
@@ -495,7 +507,14 @@ func (l *launcher) campaignChanged(which int) {
 			l.loading = false
 		}
 		entry := l.currentEntry()
-		if iwad, ok := l.cfg.CampaignIWAD[strings.ToLower(entry.Name)]; ok {
+		if entry.IWAD != "" {
+			// A base-game entry *is* its IWAD, so pin the base-game dropdown.
+			if i := indexOfFold(l.scan.IWADs, entry.IWAD, -1); i >= 0 {
+				l.loading = true
+				l.iwadBox.SetCurrentIndex(i)
+				l.loading = false
+			}
+		} else if iwad, ok := l.cfg.CampaignIWAD[strings.ToLower(entry.Name)]; ok {
 			if i := indexOfFold(l.scan.IWADs, iwad, -1); i >= 0 {
 				l.loading = true
 				l.iwadBox.SetCurrentIndex(i)
@@ -528,6 +547,15 @@ func (l *launcher) onBrutalChanged() {
 
 func (l *launcher) onIWADChanged() {
 	if !l.loading {
+		// Switching base game out from under a base-game entry would leave the
+		// two dropdowns disagreeing, so drop the campaign selection.
+		if entry := l.currentEntry(); entry.IWAD != "" && !strings.EqualFold(entry.IWAD, l.currentIWAD()) {
+			l.loading = true
+			for i := range l.campBoxes {
+				l.campBoxes[i].SetCurrentIndex(0)
+			}
+			l.loading = false
+		}
 		if entry := l.currentEntry(); entry.Name != "" {
 			l.cfg.CampaignIWAD[strings.ToLower(entry.Name)] = l.currentIWAD()
 		}
@@ -579,6 +607,7 @@ func (l *launcher) onRefresh() {
 	l.loading = false
 	l.restoreSelection()
 	l.statuses.reload()
+	l.updateStatusBar()
 }
 
 // onAddPreset builds a new multi-file entry - the Extermination Day case, where
@@ -647,6 +676,7 @@ func (l *launcher) applyPreset(origName string, res presetResult) {
 	l.loading = false
 	l.restoreSelection()
 	l.statuses.reload()
+	l.updateStatusBar()
 }
 
 func (l *launcher) onCheatFilter() {

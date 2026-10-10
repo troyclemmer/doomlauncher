@@ -52,6 +52,15 @@ campaign promotes it to *in progress* — but only from *not started*, so markin
 something completed sticks even if you replay it. The **Progress tab** lists
 everything in a table; select one or more rows and reassign them.
 
+Base games are campaigns too. DOOM2.WAD, TNT and Plutonia each get their own
+entry with a readable title, so they carry a status like any megawad. Selecting
+one pins the base-game dropdown and loads no `-file`.
+
+**Status bar** along the bottom: campaigns, base games and presets detected;
+completed / in progress / not started / ignored; launches logged; and the total
+size of every wad in the folder — the numbers worth comparing between two
+machines.
+
 **History tab** logs every launch with its full command line. Double-click a row to
 restore those settings.
 
