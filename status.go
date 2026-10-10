@@ -290,7 +290,7 @@ func (l *launcher) updateStatusBar() {
 	}
 	// Ordered so the least important field truncates first on a narrow window.
 	l.sbMain.SetText(fmt.Sprintf(
-		"%s     %d campaigns, %d base games, %d presets     %d done / %d playing / %d to play / %d ignored     %s",
+		"%s  •  %d campaigns, %d base games, %d presets  •  %d done / %d playing / %d to play / %d ignored  •  %s",
 		engine, campaigns, bases, len(l.cfg.Presets),
 		byStatus[indexOfStatus(StatusDone)], byStatus[indexOfStatus(StatusProgress)],
 		byStatus[indexOfStatus(StatusTodo)], byStatus[indexOfStatus(StatusIgnore)],

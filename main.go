@@ -432,6 +432,13 @@ func (l *launcher) build() error {
 	if icon, err := walk.NewIconFromResourceId(appIconResourceID); err == nil {
 		l.mw.SetIcon(icon)
 	}
+	// The status bar is created with SBARS_SIZEGRIP, and Windows does not
+	// reliably erase the grip while the window is being dragged - it smears
+	// into the widened area. walk never invalidates the bar on resize, so do
+	// it here.
+	if sb := l.mw.StatusBar(); sb != nil {
+		l.mw.SizeChanged().Attach(func() { sb.Invalidate() })
+	}
 	l.restoreSelection()
 	l.statuses.reload()
 	l.updateStatusBar()
