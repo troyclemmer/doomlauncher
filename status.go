@@ -267,7 +267,7 @@ func (l *launcher) syncBrutal() {
 // are the numbers you would compare between two machines to see whether the
 // collections and progress actually match.
 func (l *launcher) updateStatusBar() {
-	if l.sbCounts == nil {
+	if l.sbMain == nil {
 		return
 	}
 	var campaigns, bases int
@@ -284,17 +284,17 @@ func (l *launcher) updateStatusBar() {
 		byStatus[indexOfStatus(l.statusOf(e.Name))]++
 	}
 
-	l.sbCounts.SetText(fmt.Sprintf("%d campaigns  ·  %d base games  ·  %d presets",
-		campaigns, bases, len(l.cfg.Presets)))
-	l.sbProgress.SetText(fmt.Sprintf("%d completed  ·  %d in progress  ·  %d not started  ·  %d ignored",
-		byStatus[indexOfStatus(StatusDone)], byStatus[indexOfStatus(StatusProgress)],
-		byStatus[indexOfStatus(StatusTodo)], byStatus[indexOfStatus(StatusIgnore)]))
 	engine := l.engineVer
 	if engine == "" {
 		engine = l.cfg.Engine
 	}
-	l.sbEngine.SetText(engine)
-	l.sbSize.SetText(wadinfo.HumanSize(l.scan.TotalBytes))
+	// Ordered so the least important field truncates first on a narrow window.
+	l.sbMain.SetText(fmt.Sprintf(
+		"%s     %d campaigns, %d base games, %d presets     %d done / %d playing / %d to play / %d ignored     %s",
+		engine, campaigns, bases, len(l.cfg.Presets),
+		byStatus[indexOfStatus(StatusDone)], byStatus[indexOfStatus(StatusProgress)],
+		byStatus[indexOfStatus(StatusTodo)], byStatus[indexOfStatus(StatusIgnore)],
+		wadinfo.HumanSize(l.scan.TotalBytes)))
 }
 
 // crlf is what the Windows message box and edit controls want for a line break.

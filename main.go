@@ -86,11 +86,12 @@ type launcher struct {
 	statuses    *statusModel
 	statusTable *walk.TableView
 
-	sbCounts   *walk.StatusBarItem
-	sbProgress *walk.StatusBarItem
-	sbEngine   *walk.StatusBarItem
-	engineVer  string
-	sbSize     *walk.StatusBarItem
+	// One status bar part, not several. walk only springs a part to the
+	// window edge when it is the only one; with several, each gets a fixed
+	// right edge, so the last clips and the strip beside the resize grip is
+	// left unpainted - which shows as tearing while dragging.
+	sbMain    *walk.StatusBarItem
+	engineVer string
 
 	cheats      *cheatModel
 	cheatFilter *walk.LineEdit
@@ -162,10 +163,7 @@ func (l *launcher) build() error {
 		Size:     Size{Width: 780, Height: 540},
 		Layout:   VBox{},
 		StatusBarItems: []StatusBarItem{
-			{AssignTo: &l.sbEngine, Width: 140},
-			{AssignTo: &l.sbCounts, Width: 260},
-			{AssignTo: &l.sbProgress, Width: 330},
-			{AssignTo: &l.sbSize, Width: 80},
+			{AssignTo: &l.sbMain},
 		},
 		Children: []Widget{
 			TabWidget{
