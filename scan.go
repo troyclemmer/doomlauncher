@@ -14,7 +14,7 @@ var knownIWADs = map[string]bool{
 	"heretic.wad": true, "hexen.wad": true,
 	"strife1.wad": true, "chex.wad": true, "chex3.wad": true,
 	"freedoom1.wad": true, "freedoom2.wad": true, "freedm.wad": true,
-	"heretic_ex.wad": true, "sve.wad": true, "id1.wad": true,
+	"sve.wad": true, "id1.wad": true,
 }
 
 // addonTitles name well-known add-on PWADs that ship without a readme, so
@@ -24,6 +24,8 @@ var addonTitles = map[string]string{
 	"sigil.wad": "SIGIL", "sigil2.wad": "SIGIL II",
 	"hexdd.wad":      "Deathkings of the Dark Citadel",
 	"heretic_fr.wad": "Faith Renewed", "hexen_vog.wad": "Vestiges of Grandeur",
+	"heretic_ex.wad": "Heretic (enhanced maps)", "hexen_ex.wad": "Hexen (enhanced maps)",
+	"hexdd_ex.wad": "Deathkings (enhanced maps)",
 }
 
 // engineFiles ship with GZDoom/UZDoom and are auto-loaded; they are not campaigns.

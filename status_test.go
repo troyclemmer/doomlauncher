@@ -264,14 +264,35 @@ func TestEraInferenceOnRealWads(t *testing.T) {
 // nerve, sigil and the Master Levels are add-ons, not base games: listing them
 // as IWADs would offer them in the base-game dropdown, where they cannot work.
 func TestAddOnsAreNotBaseGames(t *testing.T) {
-	for _, f := range []string{"nerve.wad", "hexdd.wad", "sigil.wad", "masterlevels.wad", "heretic_fr.wad"} {
+	for _, f := range []string{"nerve.wad", "hexdd.wad", "sigil.wad", "masterlevels.wad", "heretic_fr.wad", "heretic_ex.wad", "hexen_ex.wad"} {
 		if knownIWADs[f] {
 			t.Errorf("%s is an add-on PWAD but is listed as a base game", f)
 		}
 	}
-	for _, f := range []string{"doom2.wad", "heretic.wad", "hexen.wad", "strife1.wad", "sve.wad", "heretic_ex.wad"} {
+	for _, f := range []string{"doom2.wad", "heretic.wad", "hexen.wad", "strife1.wad", "sve.wad"} {
 		if !knownIWADs[f] {
 			t.Errorf("%s is a base game but is not listed", f)
+		}
+	}
+}
+
+// Heretic and Hexen must land in the base-game dropdown, and their add-ons
+// in the campaign dropdowns - not the other way round.
+func TestHereticHexenClassification(t *testing.T) {
+	dir := doomDir(t)
+	r := scanDir(dir, nil)
+	isIWAD := map[string]bool{}
+	for _, w := range r.IWADs {
+		isIWAD[strings.ToLower(w)] = true
+	}
+	for _, w := range []string{"heretic.wad", "hexen.wad"} {
+		if !isIWAD[w] {
+			t.Errorf("%s should be offered as a base game", w)
+		}
+	}
+	for _, w := range []string{"hexdd.wad", "heretic_fr.wad", "hexen_vog.wad"} {
+		if isIWAD[w] {
+			t.Errorf("%s is an add-on but was offered as a base game", w)
 		}
 	}
 }
