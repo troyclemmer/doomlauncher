@@ -11,6 +11,18 @@ import (
 	. "github.com/lxn/walk/declarative"
 )
 
+// version is injected at build time by build.ps1, which derives it from the
+// commit count and hash so two machines can be compared at a glance. A plain
+// "go build" leaves it as "dev".
+var version = "dev"
+
+func windowTitle() string {
+	if version == "dev" {
+		return "Doom Launcher (dev build)"
+	}
+	return "Doom Launcher " + version
+}
+
 var vanillaSkills = []string{
 	"Default",
 	"1 - I'm Too Young To Die",
@@ -145,7 +157,7 @@ func (l *launcher) build() error {
 
 	err := MainWindow{
 		AssignTo: &l.mw,
-		Title:    "Doom Launcher",
+		Title:    windowTitle(),
 		MinSize:  Size{Width: 700, Height: 470},
 		Size:     Size{Width: 780, Height: 540},
 		Layout:   VBox{},

@@ -20,12 +20,17 @@ var knownIWADs = map[string]bool{
 // addonTitles name well-known add-on PWADs that ship without a readme, so
 // they read properly in the dropdowns instead of as bare filenames.
 var addonTitles = map[string]string{
-	"nerve.wad": "No Rest for the Living", "masterlevels.wad": "Master Levels",
-	"sigil.wad": "SIGIL", "sigil2.wad": "SIGIL II",
-	"hexdd.wad":      "Deathkings of the Dark Citadel",
-	"heretic_fr.wad": "Faith Renewed", "hexen_vog.wad": "Vestiges of Grandeur",
-	"heretic_ex.wad": "Heretic (enhanced maps)", "hexen_ex.wad": "Hexen (enhanced maps)",
-	"hexdd_ex.wad": "Deathkings (enhanced maps)",
+	"nerve.wad":        "Doom II: No Rest for the Living",
+	"masterlevels.wad": "Doom II: Master Levels",
+	"sigil.wad":        "Doom: SIGIL",
+	"sigil2.wad":       "Doom: SIGIL II",
+	"hexdd.wad":        "Hexen: Deathkings of the Dark Citadel",
+	"heretic_fr.wad":   "Heretic: Faith Renewed",
+	"hexen_vog.wad":    "Hexen: Vestiges of Grandeur",
+	"heretic_ex.wad":   "Heretic: enhanced maps",
+	"hexen_ex.wad":     "Hexen: enhanced maps",
+	"hexdd_ex.wad":     "Hexen: Deathkings (enhanced maps)",
+	"d64d2.wad":        "Doom II: Doom 64 for Doom II",
 }
 
 // engineFiles ship with GZDoom/UZDoom and are auto-loaded; they are not campaigns.
