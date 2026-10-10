@@ -159,43 +159,46 @@ func (l *launcher) build() error {
 									},
 									HSpacer{Size: 10},
 
-									Label{Text: "In progress:"},
-									ComboBox{
-										AssignTo:              &l.campBoxes[0],
-										Model:                 l.bucketNames(0),
-										OnCurrentIndexChanged: l.onCampaignChanged(0),
-									},
-									Composite{
-										Layout: HBox{MarginsZero: true},
+									GroupBox{
+										Title:      "Campaign / WAD  -  choose one; the other three clear themselves",
+										ColumnSpan: 3,
+										Layout:     Grid{Columns: 2},
 										Children: []Widget{
-											PushButton{Text: "New...", MaxSize: Size{Width: 70}, OnClicked: l.onAddPreset},
-											PushButton{Text: "Edit...", MaxSize: Size{Width: 70}, OnClicked: l.onEditPreset},
+											Label{Text: "In progress:"},
+											ComboBox{
+												AssignTo:              &l.campBoxes[0],
+												Model:                 l.bucketNames(0),
+												OnCurrentIndexChanged: l.onCampaignChanged(0),
+											},
+											Label{Text: "Not started:"},
+											ComboBox{
+												AssignTo:              &l.campBoxes[1],
+												Model:                 l.bucketNames(1),
+												OnCurrentIndexChanged: l.onCampaignChanged(1),
+											},
+											Label{Text: "Completed:"},
+											ComboBox{
+												AssignTo:              &l.campBoxes[2],
+												Model:                 l.bucketNames(2),
+												OnCurrentIndexChanged: l.onCampaignChanged(2),
+											},
+											Label{Text: "Ignored:"},
+											ComboBox{
+												AssignTo:              &l.campBoxes[3],
+												Model:                 l.bucketNames(3),
+												OnCurrentIndexChanged: l.onCampaignChanged(3),
+											},
+											Label{Text: ""},
+											Composite{
+												Layout: HBox{MarginsZero: true},
+												Children: []Widget{
+													PushButton{Text: "New campaign...", MinSize: Size{Width: 120}, OnClicked: l.onAddPreset},
+													PushButton{Text: "Edit selected...", MinSize: Size{Width: 120}, OnClicked: l.onEditPreset},
+													HSpacer{},
+												},
+											},
 										},
 									},
-
-									Label{Text: "Not started:"},
-									ComboBox{
-										AssignTo:              &l.campBoxes[1],
-										Model:                 l.bucketNames(1),
-										OnCurrentIndexChanged: l.onCampaignChanged(1),
-									},
-									HSpacer{Size: 10},
-
-									Label{Text: "Completed:"},
-									ComboBox{
-										AssignTo:              &l.campBoxes[2],
-										Model:                 l.bucketNames(2),
-										OnCurrentIndexChanged: l.onCampaignChanged(2),
-									},
-									HSpacer{Size: 10},
-
-									Label{Text: "Ignored:"},
-									ComboBox{
-										AssignTo:              &l.campBoxes[3],
-										Model:                 l.bucketNames(3),
-										OnCurrentIndexChanged: l.onCampaignChanged(3),
-									},
-									HSpacer{Size: 10},
 
 									Label{Text: "Skill:"},
 									ComboBox{
@@ -389,6 +392,7 @@ func (l *launcher) build() error {
 		l.mw.SetIcon(icon)
 	}
 	l.restoreSelection()
+	l.statuses.reload()
 	return nil
 }
 
@@ -584,7 +588,10 @@ func (l *launcher) onAddPreset() {
 func (l *launcher) onEditPreset() {
 	entry := l.currentEntry()
 	if len(entry.Files) == 0 {
-		l.onAddPreset()
+		walk.MsgBox(l.mw, "Edit campaign",
+			"Pick a campaign in one of the four dropdowns first.\n\n"+
+				"\"New campaign...\" builds a new multi-file entry from scratch.",
+			walk.MsgBoxIconInformation)
 		return
 	}
 	l.applyPreset(entry.Name, runPresetDialog(l.mw, l.gameDir, entry.Name, entry.Files, l.isPreset(entry.Name)))
