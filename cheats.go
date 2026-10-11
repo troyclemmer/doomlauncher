@@ -20,8 +20,8 @@ type cheatItem struct {
 var cheatItems = []cheatItem{
 	{"Maps", "changemap MAP21", "Go to MAP21 as if you had walked through an exit - KEEPS weapons, ammo, armour and health."},
 	{"Maps", "map MAP21", "Go to MAP21 as a brand new game - inventory is WIPED, you start with the pistol."},
-	{"Maps", "nextmap", "Exit to the next map in normal order, keeping your inventory. The one-word fix for a wrong secret exit."},
-	{"Maps", "nextsecret", "Take the secret exit from the current map, keeping your inventory."},
+	{"Maps", "nextmap", "Go to the next map in order. Does NOT keep your inventory - you arrive with the pistol. To carry your weapons over, use changemap with the map name instead."},
+	{"Maps", "nextsecret", "Go to the secret map. Like nextmap, expect to lose your inventory; changemap is the one that carries it over."},
 	{"Maps", "restart", "Restart the current map from the beginning."},
 	{"Maps", "open somemap.wad", "Load and play a map straight out of a wad file."},
 	{"Maps", "warp 1024 -512", "Teleport to x/y coordinates inside the current map."},
