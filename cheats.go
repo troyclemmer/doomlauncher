@@ -19,9 +19,9 @@ type cheatItem struct {
 // on the wrong map is the thing you actually need the console for.
 var cheatItems = []cheatItem{
 	{"Maps", "changemap MAP21", "Go to MAP21 as if you had walked through an exit - KEEPS weapons, ammo, armour and health."},
-	{"Maps", "map MAP21", "Go to MAP21 as a brand new game - inventory is WIPED, you start with the pistol."},
-	{"Maps", "nextmap", "Go to the next map in order. Does NOT keep your inventory - you arrive with the pistol. To carry your weapons over, use changemap with the map name instead."},
-	{"Maps", "nextsecret", "Go to the secret map. Like nextmap, expect to lose your inventory; changemap is the one that carries it over."},
+	{"Maps", "map MAP21", "Go to MAP21 as a brand new game. Does not keep inventory. Use changemap to keep inventory."},
+	{"Maps", "nextmap", "Go to the next map in order. Does not keep inventory. Use changemap to keep inventory."},
+	{"Maps", "nextsecret", "Go to the secret map. Does not keep inventory. Use changemap to keep inventory."},
 	{"Maps", "restart", "Restart the current map from the beginning."},
 	{"Maps", "open somemap.wad", "Load and play a map straight out of a wad file."},
 	{"Maps", "warp 1024 -512", "Teleport to x/y coordinates inside the current map."},
