@@ -34,6 +34,13 @@ sets — and says so in its label. Your preference is remembered rather than
 overwritten while it is disabled, so switching to Heretic and back leaves
 Brutal Doom ticked as you had it.
 
+It also disables itself for a **total conversion**, detected by the `GAMEINFO`
+lump — which is GZDoom's own marker for "this file is a whole game, not an
+add-on". That catches the case the base game cannot: Ashes runs on Freedoom,
+which *is* a Doom IWAD, so nothing about the base game says a Doom gameplay mod
+would be wrong. The campaign has to say it. Because the check needs the file
+read, it lands when the background scan finishes rather than on the click.
+
 **Live command-line preview**, so you can see exactly what will run before it runs.
 
 **WAD info panel** — map count, map range, file size, monster totals per difficulty,

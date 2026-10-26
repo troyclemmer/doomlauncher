@@ -236,6 +236,43 @@ func (l *launcher) nameEntries() {
 	}
 }
 
+// brutalState works out whether the mod checkbox should be usable for the
+// current selection, and what its label should say either way.
+//
+// Two separate things can rule the mod out. The base game may not be built on
+// Doom's actor set at all, and the campaign may be a total conversion that
+// replaces that actor set itself - Ashes runs on Freedoom, which is a Doom
+// IWAD, so only the campaign gives it away.
+func (l *launcher) brutalState() (bool, string) {
+	if l.modFile == "" {
+		return false, "Brutal Doom  (no brutal*.pk3 found in this folder)"
+	}
+	if iwad := l.currentIWAD(); !supportsDoomMods(iwad) {
+		return false, "Brutal Doom  (not compatible with " + iwad + ")"
+	}
+	if entry, ok := l.standaloneEntry(); ok {
+		return false, "Brutal Doom  (" + entry + " is a standalone game)"
+	}
+	return true, "Brutal Doom  (" + l.modFile + ")"
+}
+
+// standaloneEntry reports whether the loaded campaign declares itself a whole
+// game rather than an add-on, naming it if so. The scan is asynchronous, so
+// this answers "not as far as we know yet" until the files have been read;
+// syncBrutalIfChanged picks the answer up once they have.
+func (l *launcher) standaloneEntry() (string, bool) {
+	entry := l.currentEntry()
+	if entry.Name == "" || entry.IWAD != "" {
+		return "", false
+	}
+	for _, f := range entry.Files {
+		if info, _, ok := l.wads.get(l.abs(f)); ok && info != nil && info.Standalone {
+			return entry.Display, true
+		}
+	}
+	return "", false
+}
+
 // syncBrutal enables or disables the mod checkbox for the selected base game.
 // While it is disabled the stored preference must not be overwritten, or
 // visiting Heretic once would quietly turn Brutal Doom off for Doom too.
@@ -243,24 +280,31 @@ func (l *launcher) syncBrutal() {
 	if l.brutalBox == nil {
 		return
 	}
-	iwad := l.currentIWAD()
-	ok := l.modFile != "" && supportsDoomMods(iwad)
+	ok, label := l.brutalState()
 
 	l.brutalBox.SetEnabled(ok) // before SetChecked, so the handler sees the state
-	switch {
-	case l.modFile == "":
-		l.brutalBox.SetText("Brutal Doom  (no brutal*.pk3 found in this folder)")
-	case !ok:
-		l.brutalBox.SetText("Brutal Doom  (not compatible with " + iwad + ")")
-	default:
-		l.brutalBox.SetText("Brutal Doom  (" + l.modFile + ")")
-	}
+	l.brutalBox.SetText(label)
 	if !ok {
 		l.brutalBox.SetChecked(false)
 	} else {
 		l.brutalBox.SetChecked(l.cfg.BrutalOn != nil && *l.cfg.BrutalOn)
 	}
 	l.onBrutalChanged() // the skill list depends on whether the mod is loaded
+}
+
+// syncBrutalIfChanged re-runs syncBrutal only when the answer has moved, which
+// it does once a background scan reveals the campaign is a total conversion.
+// The guard also bounds the recursion: syncBrutal refreshes the preview, which
+// refreshes the wad info, which lands back here - and by then nothing differs.
+func (l *launcher) syncBrutalIfChanged() {
+	if l.brutalBox == nil {
+		return
+	}
+	ok, label := l.brutalState()
+	if l.brutalBox.Enabled() == ok && l.brutalBox.Text() == label {
+		return
+	}
+	l.syncBrutal()
 }
 
 // updateStatusBar refreshes the counts along the bottom of the window. These

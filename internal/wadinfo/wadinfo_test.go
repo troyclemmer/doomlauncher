@@ -2,6 +2,7 @@ package wadinfo
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -32,5 +33,40 @@ func TestCommas(t *testing.T) {
 		if got := Commas(c.in); got != c.want {
 			t.Errorf("Commas(%d) = %q, want %q", c.in, got, c.want)
 		}
+	}
+}
+
+// A total conversion is recognised by its GAMEINFO lump, which is what GZDoom
+// itself uses to decide a file is a whole game rather than an add-on. Ashes
+// keeps one in each campaign pk3; an ordinary megawad has none.
+func TestStandaloneDetection(t *testing.T) {
+	dir := doomDir(t)
+	cases := map[string]bool{
+		"Ashes2063Enriched2_23.pk3":    true,
+		"AshesAfterglow1_15.pk3":       true,
+		"AshesHardReset1_00.pk3":       true,
+		"AshesSAMenu.pk3":              false, // menu skin only, no GAMEINFO
+		"Ashes2063EnrichedFDPatch.pk3": false,
+		"sunlust.wad":                  false,
+		"freedoom2.wad":                false,
+	}
+	ran := 0
+	for name, want := range cases {
+		p := filepath.Join(dir, name)
+		if _, err := os.Stat(p); err != nil {
+			continue
+		}
+		info, err := Scan(p)
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		ran++
+		if info.Standalone != want {
+			t.Errorf("%s: Standalone = %v, want %v", name, info.Standalone, want)
+		}
+	}
+	if ran == 0 {
+		t.Skip("none of the sample files are present")
 	}
 }

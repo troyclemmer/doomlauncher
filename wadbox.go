@@ -170,6 +170,9 @@ func (l *launcher) updateWadInfo() {
 			l.wadBox.SetText(text)
 			r, _ := l.wads.getReadme(primary)
 			l.setReadme(r)
+			// Whether a campaign is a total conversion is only known once it
+			// has been read, which is after the checkbox was last set.
+			l.syncBrutalIfChanged()
 		})
 	}()
 }

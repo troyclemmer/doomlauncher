@@ -74,6 +74,13 @@ type Info struct {
 	// explaining itself.
 	HasPalette bool
 
+	// Standalone reports whether the file carries a GAMEINFO lump. That is
+	// GZDoom's own marker for "this is a whole game, not an add-on": Ashes and
+	// other total conversions use it to replace the title screen and actor set
+	// wholesale. A Doom gameplay mod loaded on top of one has nothing left to
+	// modify and generally breaks it.
+	Standalone bool
+
 	File  string
 	Kind  string // IWAD, PWAD or PK3
 	Lumps int
@@ -128,6 +135,9 @@ func scanArchive(path string, size int64) (*Info, error) {
 	info := &Info{File: filepath.Base(path), Kind: "PK3", Bytes: size, Lumps: len(zr.File), HasPalette: true}
 	for _, f := range zr.File {
 		name := strings.ToLower(f.Name)
+		if base := name[strings.LastIndex(name, "/")+1:]; base == "gameinfo" || base == "gameinfo.txt" {
+			info.Standalone = true
+		}
 		// Maps may sit under maps/ or as a whole wad embedded anywhere in the
 		// archive - Extermination Day keeps its in edaymaps.wad at the root.
 		if !strings.HasSuffix(name, ".wad") || f.UncompressedSize64 > maxEmbedded {
@@ -193,9 +203,11 @@ func parseWAD(r io.ReaderAt, size int64) (*Info, error) {
 
 	info := &Info{Kind: kind, Lumps: len(dir)}
 	for _, l := range dir {
-		if l.name == "PLAYPAL" {
+		switch l.name {
+		case "PLAYPAL":
 			info.HasPalette = true
-			break
+		case "GAMEINFO":
+			info.Standalone = true
 		}
 	}
 	for i, l := range dir {
