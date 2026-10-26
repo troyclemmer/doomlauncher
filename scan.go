@@ -41,6 +41,15 @@ var engineFiles = map[string]bool{
 	"game_support_data.pk3": true, "soundfonts.pk3": true, "licenses.zip": true,
 }
 
+// autoLoaded are data files the engine pulls in by itself once it knows which
+// base game is running - Strife's voice acting is declared with Load =
+// "voices.wad" in iwadinfo. They must sit in the folder, but listing them as
+// campaigns would be wrong: voices.wad carries an IWAD header and no maps, so
+// it would otherwise show up as an unplayable base game.
+var autoLoaded = map[string]bool{
+	"voices.wad": true,
+}
+
 var loadableExts = map[string]bool{
 	".wad": true, ".pk3": true, ".pk7": true, ".ipk3": true,
 }
@@ -67,7 +76,8 @@ var iwadTitles = map[string]string{
 	"doom2.wad": "Doom II: Hell on Earth", "plutonia.wad": "The Plutonia Experiment",
 	"tnt.wad": "TNT: Evilution", "doom64.wad": "Doom 64",
 	"heretic.wad": "Heretic", "hexen.wad": "Hexen",
-	"strife1.wad": "Strife", "chex.wad": "Chex Quest", "chex3.wad": "Chex Quest 3",
+	"strife1.wad": "Strife", "sve.wad": "Strife: Veteran Edition",
+	"chex.wad": "Chex Quest", "chex3.wad": "Chex Quest 3",
 	"freedoom1.wad": "Freedoom: Phase 1", "freedoom2.wad": "Freedoom: Phase 2",
 	"freedm.wad": "FreeDM",
 }
@@ -172,7 +182,7 @@ func scanDir(dir string, presets []Preset) scanResult {
 			}
 			continue
 		}
-		if !loadableExts[ext] || engineFiles[lower] {
+		if !loadableExts[ext] || engineFiles[lower] || autoLoaded[lower] {
 			continue
 		}
 		if fi, err := it.Info(); err == nil {
